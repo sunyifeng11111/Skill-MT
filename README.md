@@ -25,7 +25,7 @@
 
 ## 安装
 
-1. [下载 Skill-MT.dmg](https://github.com/sunyifeng11111/Skill-MT/releases/latest)
+1. [下载 Skill-MT-arm64.dmg](https://github.com/sunyifeng11111/Skill-MT/releases/latest)
 2. 打开 DMG，将 Skill-MT 拖入 Applications 文件夹
 3. 首次打开时 macOS 会提示"无法验证开发者"，**右键点击 app → 打开 → 打开**即可
 

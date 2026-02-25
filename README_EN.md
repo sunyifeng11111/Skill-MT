@@ -25,7 +25,7 @@ If you use Claude Code, the Skills feature lets you save common AI instructions 
 
 ## Installation
 
-1. [Download Skill-MT.dmg](https://github.com/sunyifeng11111/Skill-MT/releases/latest)
+1. [Download Skill-MT-arm64.dmg](https://github.com/sunyifeng11111/Skill-MT/releases/latest)
 2. Open the DMG and drag Skill-MT into your Applications folder
 3. On first launch, macOS may warn "cannot verify developer" — **right-click the app → Open → Open**
 
