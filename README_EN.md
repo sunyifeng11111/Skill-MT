@@ -45,6 +45,23 @@ Press `⌘R` in Xcode to run.
 
 Skills are Markdown files with YAML frontmatter stored under `~/.claude/skills/`, used as reusable instructions for the Claude Code CLI. See the [Claude Code documentation](https://docs.anthropic.com/en/docs/claude-code/skills) for details.
 
+## Screenshots
+
+**Main View**
+![Main View](docs/主页面.png)
+
+**Create Skill**
+![Create Skill](docs/新建技能.png)
+
+**Edit Skill**
+![Edit Skill](docs/编辑技能.png)
+
+**Global Skills**
+![Global Skills](docs/全局技能.png)
+
+**Plugin Skills**
+![Plugin Skills](docs/插件技能.png)
+
 ## License
 
 MIT

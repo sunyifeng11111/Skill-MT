@@ -45,6 +45,23 @@ open Skill-MT.xcodeproj
 
 Skills 是存储在 `~/.claude/skills/` 下的 Markdown 文件，带有 YAML frontmatter，作为 Claude Code CLI 的可复用指令。详见 [Claude Code 官方文档](https://docs.anthropic.com/en/docs/claude-code/skills)。
 
+## 截图
+
+**主页面**
+![主页面](docs/主页面.png)
+
+**新建技能**
+![新建技能](docs/新建技能.png)
+
+**编辑技能**
+![编辑技能](docs/编辑技能.png)
+
+**全局技能**
+![全局技能](docs/全局技能.png)
+
+**插件技能**
+![插件技能](docs/插件技能.png)
+
 ## License
 
 MIT
