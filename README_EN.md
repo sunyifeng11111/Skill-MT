@@ -7,8 +7,7 @@ If you use Claude Code, the Skills feature lets you save common AI instructions 
 ![macOS](https://img.shields.io/badge/macOS-26.0+-000000?logo=apple)
 ![Swift](https://img.shields.io/badge/Swift-6-FA7343?logo=swift)
 ![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-only-000000?logo=apple)
-
-[中文](README.md)
+[![中文](https://img.shields.io/badge/lang-中文-blue)](README.md)
 
 ## Download
 

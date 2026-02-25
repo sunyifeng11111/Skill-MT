@@ -7,8 +7,7 @@
 ![macOS](https://img.shields.io/badge/macOS-26.0+-000000?logo=apple)
 ![Swift](https://img.shields.io/badge/Swift-6-FA7343?logo=swift)
 ![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-only-000000?logo=apple)
-
-[English](README_EN.md)
+[![English](https://img.shields.io/badge/lang-English-blue)](README_EN.md)
 
 ## 下载
 
