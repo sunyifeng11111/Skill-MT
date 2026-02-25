@@ -7,6 +7,10 @@
 ![macOS](https://img.shields.io/badge/macOS-26.0+-000000?logo=apple)
 ![Swift](https://img.shields.io/badge/Swift-6-FA7343?logo=swift)
 
+## 下载
+
+[**下载最新版本 →**](https://github.com/sunyifeng11111/Skill-MT/releases/latest)
+
 ## 功能
 
 - **创建 / 编辑 / 删除**技能，支持编辑 frontmatter 和 Markdown 内容
@@ -18,7 +22,7 @@
 
 ## 安装
 
-1. 下载 `Skill-MT.dmg`
+1. [下载 Skill-MT.dmg](https://github.com/sunyifeng11111/Skill-MT/releases/latest)
 2. 打开 DMG，将 Skill-MT 拖入 Applications 文件夹
 3. 首次打开时 macOS 会提示"无法验证开发者"，**右键点击 app → 打开 → 打开**即可
 
@@ -41,3 +45,46 @@ Skills 是存储在 `~/.claude/skills/` 下的 Markdown 文件，带有 YAML fro
 ## License
 
 MIT
+
+---
+
+# Skill-MT (English)
+
+**Skill-MT** is a macOS GUI for managing Claude Code Skills.
+
+If you use Claude Code, Skills let you save reusable AI instructions as local files. But managing those files has always meant digging around in the filesystem. Skill-MT gives you a clean interface to handle everything without touching the command line.
+
+## Download
+
+[**Download latest release →**](https://github.com/sunyifeng11111/Skill-MT/releases/latest)
+
+## Features
+
+- **Create / edit / delete** skills with frontmatter and Markdown content editing
+- **Enable / disable** skills (renames the file, no data loss)
+- **Import** skill folders or ZIP archives, **export** to share with others
+- Manage **personal skills**, **project skills**, **legacy commands**, and **plugin skills**
+- Real-time **search** across skill names and descriptions
+- **Chinese / English** interface
+
+## Installation
+
+1. [Download Skill-MT.dmg](https://github.com/sunyifeng11111/Skill-MT/releases/latest)
+2. Open the DMG and drag Skill-MT into your Applications folder
+3. On first launch macOS will warn "unverified developer" — **right-click the app → Open → Open** to bypass Gatekeeper
+
+## Build from Source
+
+Requires Xcode 16+ and macOS 26+.
+
+```bash
+git clone https://github.com/sunyifeng11111/Skill-MT.git
+cd Skill-MT/Skill-MT
+open Skill-MT.xcodeproj
+```
+
+Press `⌘R` in Xcode to run.
+
+## What are Skills?
+
+Skills are Markdown files with YAML frontmatter stored under `~/.claude/skills/`, used as reusable instructions for the Claude Code CLI. See the [Claude Code docs](https://docs.anthropic.com/en/docs/claude-code/skills) for details.
