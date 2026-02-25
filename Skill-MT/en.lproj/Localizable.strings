@@ -1,0 +1,85 @@
+﻿/* App */
+"Settings" = "Settings";
+"Done" = "Done";
+"Cancel" = "Cancel";
+"Save" = "Save";
+"Create" = "Create";
+"Delete" = "Delete";
+"Edit" = "Edit";
+"Export" = "Export";
+"Import" = "Import";
+
+/* Settings */
+"Settings" = "Settings";
+"Skill-MT preferences" = "Skill-MT preferences";
+"Language" = "Language";
+"Display Language" = "Display Language";
+"System Default" = "System Default";
+"Restart may be required for full effect." = "Restart may be required for full effect.";
+
+/* Skill List */
+"Personal Skills" = "Personal Skills";
+"Legacy Commands" = "Legacy Commands";
+"No Skills Yet" = "No Skills Yet";
+"Create your first skill with the + button above." = "Create your first skill with the + button above.";
+"No Results" = "No Results";
+"Import Skill" = "Import Skill";
+"Add Project…" = "Add Project…";
+"New Skill" = "New Skill";
+"Search skills…" = "Search skills…";
+
+/* Skill Row / Context Menu */
+"Show in Finder" = "Show in Finder";
+"Copy Path" = "Copy Path";
+"Export…" = "Export…";
+"Delete…" = "Delete…";
+"Disable" = "Disable";
+"Enable" = "Enable";
+
+/* Skill Detail */
+"Select a Skill" = "Select a Skill";
+"Choose a skill from the list to view its details." = "Choose a skill from the list to view its details.";
+"Show in Finder" = "Show in Finder";
+"Reveal in Finder" = "Reveal in Finder";
+"Disabled" = "Disabled";
+"Plugin" = "Plugin";
+"Modified" = "Modified";
+"Supporting Files" = "Supporting Files";
+"No content" = "No content";
+"Content" = "Content";
+
+/* Create Skill */
+"New Skill" = "New Skill";
+"Create a local skill for Claude Code" = "Create a local skill for Claude Code";
+"Identity" = "Identity";
+"Skill name" = "Skill name";
+"e.g. code-reviewer" = "e.g. code-reviewer";
+"Description" = "Description";
+"One-line description (optional)" = "One-line description (optional)";
+"Settings" = "Settings";
+"User-invocable" = "User-invocable";
+"Disable model invocation" = "Disable model invocation";
+"Location" = "Location";
+"Save to" = "Save to";
+"Initial Content" = "Initial Content";
+"Output path" = "Output path";
+"Personal Skills" = "Personal Skills";
+
+/* Edit Skill */
+"Edit Skill" = "Edit Skill";
+"Frontmatter" = "Frontmatter";
+
+/* Import */
+"Import Skill…" = "Import Skill…";
+"Select a skill folder or ZIP archive" = "Select a skill folder or ZIP archive";
+
+/* Export */
+"Export Skill" = "Export Skill";
+
+/* Badges */
+"Auto-off" = "Auto-off";
+"Hidden" = "Hidden";
+"Fork" = "Fork";
+"Personal" = "Personal";
+"Legacy Command" = "Legacy Command";
+"Version" = "Version";

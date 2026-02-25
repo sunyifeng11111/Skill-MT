@@ -1,0 +1,94 @@
+﻿/* App */
+"Settings" = "设置";
+"Done" = "完成";
+"Cancel" = "取消";
+"Save" = "保存";
+"Create" = "创建";
+"Delete" = "删除";
+"Edit" = "编辑";
+"Export" = "导出";
+"Import" = "导入";
+
+/* Settings */
+"Skill-MT preferences" = "Skill-MT 偏好设置";
+"Language" = "语言";
+"Display Language" = "显示语言";
+"System Default" = "跟随系统";
+"Restart may be required for full effect." = "完全生效可能需要重启应用。";
+
+/* Skill List */
+"Personal Skills" = "个人技能";
+"Legacy Commands" = "旧版命令";
+"No Skills Yet" = "暂无技能";
+"Skills are reusable instructions for Claude Code. Create your first skill with the + button above." = "技能是 Claude Code 的可复用指令。点击上方 + 按钮创建第一个技能。";
+"Create Skill" = "创建技能";
+"Learn More" = "了解更多";
+"No Results" = "无结果";
+"Clear Search" = "清除搜索";
+"Import Skill" = "导入技能";
+"Add Project…" = "添加项目…";
+"New Skill" = "新建技能";
+"Search skills…" = "搜索技能…";
+
+/* Skill Row / Context Menu */
+"Show in Finder" = "在 Finder 中显示";
+"Copy Path" = "复制路径";
+"Export…" = "导出…";
+"Delete…" = "删除…";
+"Disable" = "禁用";
+"Enable" = "启用";
+
+/* Skill Detail */
+"Select a Skill" = "选择一个技能";
+"Skills are reusable instructions that Claude Code can invoke. Select one from the list to view its details." = "技能是 Claude Code 可调用的可复用指令。从列表中选择一个以查看详情。";
+"Reveal in Finder" = "在 Finder 中显示";
+"Disabled" = "已禁用";
+"Plugin" = "插件";
+"Supporting Files" = "附属文件";
+"No content" = "暂无内容";
+"Content" = "内容";
+"Plugin skill — read only" = "插件技能 — 只读";
+"Fork to Personal Skills to edit or customize." = "Fork 到个人技能以编辑或自定义。";
+"Fork to Personal" = "Fork 到个人技能";
+
+/* Disable confirmation */
+"Claude Code will no longer be able to find this skill. You can re-enable it at any time." = "Claude Code 将无法找到此技能。你可以随时重新启用它。";
+
+/* Create Skill */
+"Create a local skill for Claude Code" = "为 Claude Code 创建本地技能";
+"Identity" = "基本信息";
+"Skill name" = "技能名称";
+"e.g. code-reviewer" = "例如：code-reviewer";
+"Description" = "描述";
+"One-line description (optional)" = "一行描述（可选）";
+"User-invocable" = "用户可调用";
+"Disable model invocation" = "禁用模型调用";
+"Location" = "保存位置";
+"Save to" = "保存到";
+"Initial Content" = "初始内容";
+"Output path" = "输出路径";
+
+/* Edit Skill */
+"Edit Skill" = "编辑技能";
+"Frontmatter" = "元数据";
+
+/* Import */
+"Import Skill…" = "导入技能…";
+"Select a skill folder or ZIP archive" = "选择技能文件夹或 ZIP 压缩包";
+
+/* Export */
+"Export Skill" = "导出技能";
+
+/* Badges */
+"Auto-off" = "自动关闭";
+"Hidden" = "已隐藏";
+"Fork" = "Fork";
+"Personal" = "个人";
+"Legacy Command" = "旧版命令";
+
+/* Appearance */
+"Appearance" = "外观";
+"System" = "跟随系统";
+"Light" = "浅色";
+"Dark" = "深色";
+"Version" = "版本";
