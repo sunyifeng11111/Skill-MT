@@ -1,5 +1,7 @@
 # Skill-MT
 
+<img src="docs/logo.png" width="128" />
+
 **Skill-MT** 是一个用于管理 Claude Code Skills 的 macOS 图形界面工具。
 
 如果你在用 Claude Code，Skills 功能可以把常用的 AI 指令保存成文件随时调用。但管理这些文件一直要靠手动操作文件夹。Skill-MT 提供了一个简洁的 GUI，让你不用碰命令行就能管理所有技能。
