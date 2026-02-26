@@ -23,7 +23,7 @@
 "Choose…" = "选择…";
 "Reset" = "恢复默认";
 "Path does not exist yet. Skills list will be empty until created." = "该路径目前不存在；创建目录前技能列表会为空。";
-"Project skills path remains <project>/.claude/skills and is not overridden by this setting." = "项目技能路径始终为 <project>/.claude/skills，不受此设置影响。";
+"Project skills path remains <project>/.claude/skills and is not overridden by this setting." = "项目技能路径按提供方固定：Claude 为 <project>/.claude/skills，Codex 为 <project>/.agents/skills；不受此设置影响。";
 "Latest" = "最新版本";
 "Check for Updates…" = "检查更新…";
 "Download Update" = "下载更新";
@@ -36,7 +36,7 @@
 "Update package downloaded and opened." = "更新包已下载并打开。";
 
 /* Skill List */
-"Personal Skills" = "个人技能";
+"Personal Skills" = "全局技能";
 "Legacy Commands" = "旧版命令";
 "No Skills Yet" = "暂无技能";
 "Skills are reusable instructions for Claude Code. Create your first skill with the + button above." = "技能是 Claude Code 的可复用指令。点击上方 + 按钮创建第一个技能。";
@@ -47,6 +47,8 @@
 "Clear Search" = "清除搜索";
 "Import Skill" = "导入技能";
 "Add Project…" = "添加项目…";
+"Switch to %@" = "切换到 %@";
+"Remove Project" = "移除项目";
 "New Skill" = "新建技能";
 "Search skills…" = "搜索技能…";
 "System Skills" = "系统技能";
@@ -70,8 +72,8 @@
 "No content" = "暂无内容";
 "Content" = "内容";
 "Plugin skill — read only" = "插件技能 — 只读";
-"Fork to Personal Skills to edit or customize." = "Fork 到个人技能以编辑或自定义。";
-"Fork to Personal" = "Fork 到个人技能";
+"Fork to Personal Skills to edit or customize." = "Fork 到全局技能以编辑或自定义。";
+"Fork to Personal" = "Fork 到全局技能";
 "System skill — read only" = "系统技能 — 只读";
 "Built-in Codex skills cannot be edited or deleted." = "Codex 内置系统技能不可编辑或删除。";
 
@@ -100,6 +102,13 @@
 /* Import */
 "Import Skill…" = "导入技能…";
 "Select a skill folder or ZIP archive" = "选择技能文件夹或 ZIP 压缩包";
+"Review and configure the skill before importing" = "导入前请先检查并配置技能";
+"Preview" = "预览";
+"Name cannot be empty" = "名称不能为空";
+"Only letters, numbers, hyphens, and underscores are allowed" = "仅允许字母、数字、连字符和下划线";
+"%d supporting file(s)" = "%d 个附属文件";
+"name" = "名称";
+"location" = "位置";
 
 /* Export */
 "Export Skill" = "导出技能";
@@ -108,7 +117,7 @@
 "Auto-off" = "自动关闭";
 "Hidden" = "已隐藏";
 "Fork" = "Fork";
-"Personal" = "个人";
+"Personal" = "全局";
 "System Skill" = "系统";
 "Legacy Command" = "旧版命令";
 

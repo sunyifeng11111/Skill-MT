@@ -4,6 +4,7 @@ struct ImportSkillView: View {
     @Bindable var appState: AppState
     let package: SkillPackage
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.localization) private var localization
 
     @State private var skillName: String
     @State private var selectedLocation: SkillLocation
@@ -14,8 +15,22 @@ struct ImportSkillView: View {
         self.package = package
         self.appState = appState
         _skillName = State(initialValue: package.name)
+        let initialLocation: SkillLocation = {
+            switch appState.selectedProvider {
+            case .claude:
+                if case .project = appState.preferredCreateLocation {
+                    return appState.preferredCreateLocation
+                }
+                return .personal
+            case .codex:
+                if case .codexProject = appState.preferredCreateLocation {
+                    return appState.preferredCreateLocation
+                }
+                return .codexPersonal
+            }
+        }()
         _selectedLocation = State(
-            initialValue: appState.selectedProvider == .codex ? .codexPersonal : .personal
+            initialValue: initialLocation
         )
     }
 
@@ -26,16 +41,18 @@ struct ImportSkillView: View {
             locations += appState.monitoredProjectURLs.map { .project(path: $0.path) }
             return locations
         case .codex:
-            return [.codexPersonal]
+            var locations: [SkillLocation] = [.codexPersonal]
+            locations += appState.monitoredProjectURLs.map { .codexProject(path: $0.path) }
+            return locations
         }
     }
 
     private var nameError: String? {
         let trimmed = skillName.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty { return "Name cannot be empty" }
+        if trimmed.isEmpty { return localization.string("Name cannot be empty") }
         let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
         if !trimmed.unicodeScalars.allSatisfy({ allowed.contains($0) }) {
-            return "Only letters, numbers, hyphens, and underscores are allowed"
+            return localization.string("Only letters, numbers, hyphens, and underscores are allowed")
         }
         return nil
     }
@@ -63,6 +80,15 @@ struct ImportSkillView: View {
             sheetFooter
         }
         .frame(minWidth: 480, idealWidth: 540, minHeight: 380)
+        .onAppear {
+            syncSelectedLocation()
+        }
+        .onChange(of: appState.monitoredProjectURLs) { _, _ in
+            syncSelectedLocation()
+        }
+        .onChange(of: appState.selectedProvider) { _, _ in
+            syncSelectedLocation()
+        }
     }
 
     // MARK: - Header / Footer
@@ -70,10 +96,10 @@ struct ImportSkillView: View {
     private var sheetHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Import Skill")
+                Text(localization.string("Import Skill"))
                     .font(.title3)
                     .fontWeight(.semibold)
-                Text("Review and configure the skill before importing")
+                Text(localization.string("Review and configure the skill before importing"))
                     .font(.caption)
                     .foregroundStyle(.secondary)            }
             Spacer()
@@ -93,7 +119,7 @@ struct ImportSkillView: View {
                 if isImporting {
                     ProgressView().controlSize(.small)
                 } else {
-                    Text("Import")
+                    Text(localization.string("Import"))
                 }
             }
             .keyboardShortcut(.return, modifiers: .command)
@@ -108,7 +134,7 @@ struct ImportSkillView: View {
 
     private var previewSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Preview")
+            sectionLabel(localization.string("Preview"))
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 8) {
@@ -135,7 +161,7 @@ struct ImportSkillView: View {
                 }
 
                 if !package.supportingFiles.isEmpty {
-                    Text("\(package.supportingFiles.count) supporting file(s)")
+                    Text(String(format: localization.string("%d supporting file(s)"), package.supportingFiles.count))
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
@@ -156,12 +182,12 @@ struct ImportSkillView: View {
 
     private var settingsSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Settings")
+            sectionLabel(localization.string("Settings"))
 
             VStack(spacing: 0) {
                 // Name row
                 HStack(alignment: .top, spacing: 8) {
-                    Text("name")
+                    Text(localization.string("name"))
                         .font(.system(.caption, design: .monospaced))
                         .foregroundStyle(.primary)
                         .frame(width: 140, alignment: .leading)
@@ -182,19 +208,21 @@ struct ImportSkillView: View {
                 // Location row (only when multiple locations are available)
                 if availableLocations.count > 1 {
                     Divider().padding(.leading, 16)
-                    HStack(spacing: 8) {
-                        Text("location")
+                    HStack(alignment: .top, spacing: 8) {
+                        Text(localization.string("location"))
                             .font(.system(.caption, design: .monospaced))
                             .foregroundStyle(.primary)
                             .frame(width: 140, alignment: .leading)
+                            .padding(.top, 3)
                         Picker("", selection: $selectedLocation) {
                             ForEach(availableLocations, id: \.self) { loc in
-                                Text(loc.displayName).tag(loc)
+                                Text(locationLabel(loc)).tag(loc)
                             }
                         }
                         .labelsHidden()
                         .pickerStyle(.menu)
                         .font(.caption)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
@@ -234,6 +262,23 @@ struct ImportSkillView: View {
 
     private struct BadgeInfo: Hashable { let label: String; let color: Color }
 
+    private func locationLabel(_ loc: SkillLocation) -> String {
+        switch loc {
+        case .personal, .codexPersonal:
+            return localization.string("Personal Skills")
+        case .codexSystem:
+            return localization.string("System Skills")
+        case .project(let path):
+            return "Project: \(URL(fileURLWithPath: path).lastPathComponent)"
+        case .codexProject(let path):
+            return "Project: \(URL(fileURLWithPath: path).lastPathComponent)"
+        case .legacyCommand:
+            return localization.string("Legacy Commands")
+        case .plugin(_, let name, _):
+            return name
+        }
+    }
+
     private func buildBadges() -> [BadgeInfo] {
         var result: [BadgeInfo] = []
         if package.frontmatter.disableModelInvocation {
@@ -266,12 +311,25 @@ struct ImportSkillView: View {
         isImporting = true
         importError = nil
         let name = skillName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let location = resolvedLocation()
         do {
-            try await appState.importSkill(package, name: name, location: selectedLocation)
+            try await appState.importSkill(package, name: name, location: location)
             dismiss()
         } catch {
             importError = error.localizedDescription
             isImporting = false
         }
+    }
+
+    @MainActor
+    private func syncSelectedLocation() {
+        selectedLocation = resolvedLocation()
+    }
+
+    private func resolvedLocation() -> SkillLocation {
+        if availableLocations.contains(selectedLocation) {
+            return selectedLocation
+        }
+        return availableLocations.first ?? .personal
     }
 }

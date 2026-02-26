@@ -7,6 +7,7 @@ struct EmptyStateView: View {
     var action: (() -> Void)? = nil
     var actionLabel: String = "Get Started"
     var learnMoreURL: URL? = nil
+    @Environment(\.localization) private var localization
 
     var body: some View {
         VStack(spacing: 16) {
@@ -26,7 +27,7 @@ struct EmptyStateView: View {
                     .padding(.top, 4)
             }
             if let url = learnMoreURL {
-                Link(String(localized: "Learn More"), destination: url)
+                Link(localization.string("Learn More"), destination: url)
                     .font(.subheadline)
                     .foregroundStyle(Color.accentColor)
             }

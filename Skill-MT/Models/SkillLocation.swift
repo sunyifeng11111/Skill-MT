@@ -5,6 +5,7 @@ enum SkillLocation: Hashable {
     case codexPersonal
     case codexSystem(path: String)
     case project(path: String)
+    case codexProject(path: String)
     case legacyCommand(path: String)
     case plugin(id: String, name: String, skillsURL: String)
 
@@ -17,6 +18,9 @@ enum SkillLocation: Hashable {
         case .codexSystem:
             return String(localized: "System Skill")
         case .project(let path):
+            let name = URL(fileURLWithPath: path).lastPathComponent
+            return String(localized: "Project: \(name)")
+        case .codexProject(let path):
             let name = URL(fileURLWithPath: path).lastPathComponent
             return String(localized: "Project: \(name)")
         case .legacyCommand:
@@ -51,6 +55,10 @@ enum SkillLocation: Hashable {
         case .project(let path):
             return URL(fileURLWithPath: path)
                 .appendingPathComponent(".claude")
+                .appendingPathComponent("skills")
+        case .codexProject(let path):
+            return URL(fileURLWithPath: path)
+                .appendingPathComponent(".agents")
                 .appendingPathComponent("skills")
         case .legacyCommand(let path):
             return URL(fileURLWithPath: path)
@@ -96,6 +104,12 @@ enum FileSystemPaths {
 
     static func codexSystemSkillsURL(settings: AppSettings = .shared) -> URL {
         codexSkillsURL(settings: settings).appendingPathComponent(".system")
+    }
+
+    static func codexProjectSkillsURL(projectPath: URL) -> URL {
+        projectPath
+            .appendingPathComponent(".agents")
+            .appendingPathComponent("skills")
     }
 
     static var claudeURL: URL { claudeURL(settings: .shared) }

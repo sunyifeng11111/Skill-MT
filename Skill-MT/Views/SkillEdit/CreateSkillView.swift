@@ -1,17 +1,20 @@
 import SwiftUI
+import AppKit
 
 struct CreateSkillView: View {
     @Bindable var appState: AppState
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.localization) private var localization
 
     @State private var rawName: String = ""
-    @State private var description: String = ""
+    @State private var descriptionText: String = ""
     @State private var userInvocable: Bool = true
     @State private var disableModelInvocation: Bool = false
     @State private var markdownContent: String = ""
-    @State private var selectedLocationIndex: Int = 0
+    @State private var selectedLocation: SkillLocation = .personal
     @State private var isCreating: Bool = false
     @State private var createError: String?
+    @State private var didInitializeLocation: Bool = false
 
     private var availableLocations: [SkillLocation] {
         switch appState.selectedProvider {
@@ -20,7 +23,9 @@ struct CreateSkillView: View {
             locations += appState.monitoredProjectURLs.map { .project(path: $0.path) }
             return locations
         case .codex:
-            return [.codexPersonal]
+            var locations: [SkillLocation] = [.codexPersonal]
+            locations += appState.monitoredProjectURLs.map { .codexProject(path: $0.path) }
+            return locations
         }
     }
 
@@ -29,12 +34,6 @@ struct CreateSkillView: View {
             .lowercased()
             .replacingOccurrences(of: " ", with: "-")
             .filter { $0.isLetter || $0.isNumber || $0 == "-" || $0 == "_" }
-    }
-
-    private var selectedLocation: SkillLocation {
-        let locs = availableLocations
-        guard selectedLocationIndex < locs.count else { return .personal }
-        return locs[selectedLocationIndex]
     }
 
     private var previewPath: String {
@@ -72,6 +71,21 @@ struct CreateSkillView: View {
             sheetFooter
         }
         .frame(minWidth: 480, idealWidth: 520, minHeight: 440)
+        .onAppear {
+            syncSelectedLocation(forcePreferred: true)
+            didInitializeLocation = true
+        }
+        .onChange(of: appState.selectedProvider) { _, _ in
+            syncSelectedLocation(forcePreferred: true)
+        }
+        .onChange(of: appState.monitoredProjectURLs) { _, _ in
+            syncSelectedLocation(forcePreferred: false)
+        }
+        .onChange(of: selectedLocation) { _, newValue in
+            if didInitializeLocation {
+                appState.preferredCreateLocation = newValue
+            }
+        }
     }
 
     // MARK: - Header / Footer
@@ -126,8 +140,7 @@ struct CreateSkillView: View {
                     .foregroundStyle(.secondary)
             }
 
-            TextField("Description", text: $description, prompt: Text("One-line description (optional)"), axis: .vertical)
-                .lineLimit(2...4)
+            TextField("Description", text: $descriptionText, prompt: Text("One-line description (optional)"))
         }
     }
 
@@ -140,9 +153,9 @@ struct CreateSkillView: View {
 
     private var locationSection: some View {
         Section("Location") {
-            Picker("Save to", selection: $selectedLocationIndex) {
-                ForEach(Array(availableLocations.enumerated()), id: \.offset) { index, loc in
-                    Text(locationLabel(loc)).tag(index)
+            Picker("Save to", selection: $selectedLocation) {
+                ForEach(availableLocations, id: \.self) { loc in
+                    Text(locationLabel(loc)).tag(loc)
                 }
             }
         }
@@ -194,15 +207,17 @@ struct CreateSkillView: View {
     private func locationLabel(_ loc: SkillLocation) -> String {
         switch loc {
         case .personal:
-            return "Personal Skills"
+            return localization.string("Personal Skills")
         case .codexPersonal:
-            return "Personal Skills"
+            return localization.string("Personal Skills")
         case .codexSystem:
-            return "System Skills"
+            return localization.string("System Skills")
         case .project(let path):
             return "Project: \(URL(fileURLWithPath: path).lastPathComponent)"
+        case .codexProject(let path):
+            return "Project: \(URL(fileURLWithPath: path).lastPathComponent)"
         case .legacyCommand:
-            return "Legacy Commands"
+            return localization.string("Legacy Commands")
         case .plugin:
             return "Plugin"
         }
@@ -210,14 +225,20 @@ struct CreateSkillView: View {
 
     @MainActor
     private func create() async {
+        // Ensure active text input (IME composition) is committed before reading state.
+        NSApp.keyWindow?.makeFirstResponder(nil)
+
         let name = sanitizedName
         guard !name.isEmpty else { return }
+        syncSelectedLocation(forcePreferred: false)
 
         isCreating = true
         createError = nil
+        let normalizedDescription = descriptionText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         let frontmatter = SkillFrontmatter(
-            description: description.isEmpty ? nil : description,
+            name: name,
+            description: normalizedDescription.isEmpty ? nil : normalizedDescription,
             disableModelInvocation: disableModelInvocation,
             userInvocable: userInvocable
         )
@@ -234,5 +255,23 @@ struct CreateSkillView: View {
             createError = error.localizedDescription
             isCreating = false
         }
+    }
+
+    @MainActor
+    private func syncSelectedLocation(forcePreferred: Bool) {
+        let locs = availableLocations
+        if locs.isEmpty {
+            selectedLocation = .personal
+            return
+        }
+        let preferred = appState.preferredCreateLocation
+        if forcePreferred, locs.contains(preferred) {
+            selectedLocation = preferred
+            return
+        }
+        if locs.contains(selectedLocation) {
+            return
+        }
+        selectedLocation = locs.contains(preferred) ? preferred : locs[0]
     }
 }

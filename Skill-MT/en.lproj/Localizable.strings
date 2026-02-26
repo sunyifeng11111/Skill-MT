@@ -24,7 +24,7 @@
 "Choose…" = "Choose…";
 "Reset" = "Reset";
 "Path does not exist yet. Skills list will be empty until created." = "Path does not exist yet. Skills list will be empty until created.";
-"Project skills path remains <project>/.claude/skills and is not overridden by this setting." = "Project skills path remains <project>/.claude/skills and is not overridden by this setting.";
+"Project skills path remains <project>/.claude/skills and is not overridden by this setting." = "Project skill paths are fixed by provider: Claude uses <project>/.claude/skills, Codex uses <project>/.agents/skills. These are not overridden by this setting.";
 "Latest" = "Latest";
 "Check for Updates…" = "Check for Updates…";
 "Download Update" = "Download Update";
@@ -37,7 +37,7 @@
 "Update package downloaded and opened." = "Update package downloaded and opened.";
 
 /* Skill List */
-"Personal Skills" = "Personal Skills";
+"Personal Skills" = "Global Skills";
 "Legacy Commands" = "Legacy Commands";
 "No Skills Yet" = "No Skills Yet";
 "Create your first skill with the + button above." = "Create your first skill with the + button above.";
@@ -45,6 +45,8 @@
 "No Results" = "No Results";
 "Import Skill" = "Import Skill";
 "Add Project…" = "Add Project…";
+"Switch to %@" = "Switch to %@";
+"Remove Project" = "Remove Project";
 "New Skill" = "New Skill";
 "Search skills…" = "Search skills…";
 "System Skills" = "System Skills";
@@ -70,8 +72,8 @@
 "No content" = "No content";
 "Content" = "Content";
 "Plugin skill — read only" = "Plugin skill — read only";
-"Fork to Personal Skills to edit or customize." = "Fork to Personal Skills to edit or customize.";
-"Fork to Personal" = "Fork to Personal";
+"Fork to Personal Skills to edit or customize." = "Fork to Global Skills to edit or customize.";
+"Fork to Personal" = "Fork to Global";
 "System skill — read only" = "System skill — read only";
 "Built-in Codex skills cannot be edited or deleted." = "Built-in Codex skills cannot be edited or deleted.";
 
@@ -91,7 +93,7 @@
 "Save to" = "Save to";
 "Initial Content" = "Initial Content";
 "Output path" = "Output path";
-"Personal Skills" = "Personal Skills";
+"Personal Skills" = "Global Skills";
 
 /* Edit Skill */
 "Edit Skill" = "Edit Skill";
@@ -100,6 +102,13 @@
 /* Import */
 "Import Skill…" = "Import Skill…";
 "Select a skill folder or ZIP archive" = "Select a skill folder or ZIP archive";
+"Review and configure the skill before importing" = "Review and configure the skill before importing";
+"Preview" = "Preview";
+"Name cannot be empty" = "Name cannot be empty";
+"Only letters, numbers, hyphens, and underscores are allowed" = "Only letters, numbers, hyphens, and underscores are allowed";
+"%d supporting file(s)" = "%d supporting file(s)";
+"name" = "name";
+"location" = "location";
 
 /* Export */
 "Export Skill" = "Export Skill";
@@ -108,7 +117,7 @@
 "Auto-off" = "Auto-off";
 "Hidden" = "Hidden";
 "Fork" = "Fork";
-"Personal" = "Personal";
+"Personal" = "Global";
 "System Skill" = "System";
 "Legacy Command" = "Legacy Command";
 "Version" = "Version";

@@ -68,6 +68,11 @@ final class FileSystemService: FileSystemServiceProtocol {
         return try discoverSkills(in: skillsURL, location: .project(path: projectPath.path))
     }
 
+    func discoverCodexProjectSkills(projectPath: URL) throws -> [Skill] {
+        let skillsURL = FileSystemPaths.codexProjectSkillsURL(projectPath: projectPath)
+        return try discoverSkills(in: skillsURL, location: .codexProject(path: projectPath.path))
+    }
+
     func discoverLegacyCommands() throws -> [Skill] {
         try discoverLegacyCommands(in: FileSystemPaths.legacyCommandsURL(settings: settings))
     }

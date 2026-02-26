@@ -87,6 +87,16 @@ final class SkillParserTests: XCTestCase {
         XCTAssertEqual(fm.description, "Does something")
     }
 
+    func testParseFrontmatter_descriptionNumericValueCoercesToString() throws {
+        let fm = try SkillParser.parseFrontmatter(yaml: "description: 2026\n")
+        XCTAssertEqual(fm.description, "2026")
+    }
+
+    func testParseFrontmatter_descriptionBooleanValueCoercesToString() throws {
+        let fm = try SkillParser.parseFrontmatter(yaml: "description: true\n")
+        XCTAssertEqual(fm.description, "true")
+    }
+
     func testParseFrontmatter_argumentHint() throws {
         let fm = try SkillParser.parseFrontmatter(yaml: "argument-hint: \"[file]\"\n")
         XCTAssertEqual(fm.argumentHint, "[file]")

@@ -3,14 +3,11 @@ import Foundation
 // MARK: - Error Types
 
 enum SkillExportError: LocalizedError {
-    case alreadyExists(name: String)
-    case copyFailed(underlying: Error)
+    case archiveFailed(underlying: Error)
 
     var errorDescription: String? {
         switch self {
-        case .alreadyExists(let name):
-            return "A folder named \"\(name)\" already exists at the destination"
-        case .copyFailed(let e):
+        case .archiveFailed(let e):
             return "Export failed: \(e.localizedDescription)"
         }
     }
@@ -20,19 +17,37 @@ enum SkillExportError: LocalizedError {
 
 struct SkillExportService {
 
-    /// Copy a skill directory into `destinationDirectory`.
+    /// Create a ZIP archive from a skill directory.
     ///
-    /// Result: `destinationDirectory/<skill.name>/`
-    func export(_ skill: Skill, to destinationDirectory: URL) throws {
+    /// Result: `<destinationZipURL>`
+    func export(_ skill: Skill, to destinationZipURL: URL) throws {
         let resolvedSource = skill.directoryURL.resolvingSymlinksInPath()
-        let target = destinationDirectory.appendingPathComponent(skill.name)
-        guard !FileManager.default.fileExists(atPath: target.path) else {
-            throw SkillExportError.alreadyExists(name: skill.name)
+        if FileManager.default.fileExists(atPath: destinationZipURL.path) {
+            do {
+                try FileManager.default.removeItem(at: destinationZipURL)
+            } catch {
+                throw SkillExportError.archiveFailed(underlying: error)
+            }
         }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/ditto")
+        process.arguments = ["-c", "-k", "--keepParent", resolvedSource.path, destinationZipURL.path]
+
         do {
-            try FileManager.default.copyItem(at: resolvedSource, to: target)
+            try process.run()
+            process.waitUntilExit()
         } catch {
-            throw SkillExportError.copyFailed(underlying: error)
+            throw SkillExportError.archiveFailed(underlying: error)
+        }
+
+        guard process.terminationStatus == 0 else {
+            throw SkillExportError.archiveFailed(
+                underlying: NSError(
+                    domain: "SkillExport",
+                    code: Int(process.terminationStatus),
+                    userInfo: [NSLocalizedDescriptionKey: "ditto exited with status \(process.terminationStatus)"]
+                )
+            )
         }
     }
 }

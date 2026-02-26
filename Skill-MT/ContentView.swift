@@ -17,8 +17,8 @@ struct ContentView: View {
             } else {
                 EmptyStateView(
                     icon: "bookmark.square",
-                    title: String(localized: "Select a Skill"),
-                    message: String(localized: "Skills are reusable instructions for coding assistants. Select one from the list to view its details."),
+                    title: localization.string("Select a Skill"),
+                    message: localization.string("Skills are reusable instructions for coding assistants. Select one from the list to view its details."),
                     learnMoreURL: URL(string: "https://agentskills.io")
                 )
             }
@@ -44,7 +44,7 @@ struct ContentView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 180)
+                .fixedSize()
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -154,9 +154,13 @@ struct ContentView: View {
             watchURLs.append(codexSystem)
         }
         for url in appState.monitoredProjectURLs {
-            let skillsURL = url.appendingPathComponent(".claude/skills")
-            if FileManager.default.fileExists(atPath: skillsURL.path) {
-                watchURLs.append(skillsURL)
+            let claudeSkillsURL = url.appendingPathComponent(".claude/skills")
+            if FileManager.default.fileExists(atPath: claudeSkillsURL.path) {
+                watchURLs.append(claudeSkillsURL)
+            }
+            let codexProjectSkillsURL = FileSystemPaths.codexProjectSkillsURL(projectPath: url)
+            if FileManager.default.fileExists(atPath: codexProjectSkillsURL.path) {
+                watchURLs.append(codexProjectSkillsURL)
             }
         }
         fileWatcher.watch(urls: watchURLs)

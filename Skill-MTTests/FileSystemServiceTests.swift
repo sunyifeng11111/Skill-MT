@@ -45,6 +45,11 @@ final class FileSystemServiceTests: XCTestCase {
                       "Expected path to contain .codex/skills/.system, got: \(path)")
     }
 
+    func testCodexProjectSkillsPath() {
+        let path = FileSystemPaths.codexProjectSkillsURL(projectPath: URL(fileURLWithPath: "/tmp/repo")).path
+        XCTAssertEqual(path, "/tmp/repo/.agents/skills")
+    }
+
     // MARK: - readSkill
 
     func testReadSkill_validSkillDirectory() throws {
@@ -193,6 +198,29 @@ final class FileSystemServiceTests: XCTestCase {
         let skills = try service.discoverSkills(in: skillsDir, location: .codexPersonal)
         XCTAssertEqual(skills.count, 1)
         XCTAssertEqual(skills.first?.frontmatter.name, "visible")
+    }
+
+    func testDiscoverCodexProjectSkills_readsAgentsSkillsDirectory() throws {
+        let projectRoot = tempDir.appendingPathComponent("repo")
+        let agentsSkills = projectRoot.appendingPathComponent(".agents/skills")
+        try FileManager.default.createDirectory(at: agentsSkills, withIntermediateDirectories: true)
+
+        createSkillIn(directory: agentsSkills, name: "codex-skill", content: "---\nname: codex-skill\n---\n# Codex")
+
+        let skills = try service.discoverCodexProjectSkills(projectPath: projectRoot)
+        XCTAssertEqual(skills.count, 1)
+        XCTAssertEqual(skills.first?.frontmatter.name, "codex-skill")
+        if case let .codexProject(path) = skills.first?.location {
+            XCTAssertEqual(path, projectRoot.path)
+        } else {
+            XCTFail("Expected codexProject location")
+        }
+    }
+
+    func testDiscoverCodexProjectSkills_missingDirectory_returnsEmpty() throws {
+        let projectRoot = tempDir.appendingPathComponent("repo-missing")
+        let skills = try service.discoverCodexProjectSkills(projectPath: projectRoot)
+        XCTAssertTrue(skills.isEmpty)
     }
 
     // MARK: - discoverLegacyCommands

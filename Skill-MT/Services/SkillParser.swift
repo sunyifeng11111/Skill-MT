@@ -90,15 +90,15 @@ enum SkillParser {
         }
 
         return SkillFrontmatter(
-            name:                     dict["name"] as? String,
-            description:              dict["description"] as? String,
-            argumentHint:             dict["argument-hint"] as? String,
+            name:                     string(from: dict["name"]),
+            description:              string(from: dict["description"]),
+            argumentHint:             string(from: dict["argument-hint"]),
             disableModelInvocation:   bool(from: dict["disable-model-invocation"]) ?? false,
             userInvocable:            bool(from: dict["user-invocable"]) ?? true,
-            allowedTools:             dict["allowed-tools"] as? String,
-            model:                    dict["model"] as? String,
-            context:                  dict["context"] as? String,
-            agent:                    dict["agent"] as? String,
+            allowedTools:             string(from: dict["allowed-tools"]),
+            model:                    string(from: dict["model"]),
+            context:                  string(from: dict["context"]),
+            agent:                    string(from: dict["agent"]),
             hooksRaw:                 hooksRaw
         )
     }
@@ -152,6 +152,27 @@ enum SkillParser {
             }
         case let i as Int:
             return i != 0
+        default:
+            return nil
+        }
+    }
+
+    /// Coerce a Yams-decoded scalar value to String, preserving legacy files where
+    /// YAML implicit typing may decode unquoted text as non-String.
+    private static func string(from value: Any?) -> String? {
+        switch value {
+        case let s as String:
+            return s
+        case let b as Bool:
+            return b ? "true" : "false"
+        case let i as Int:
+            return String(i)
+        case let d as Double:
+            return String(d)
+        case let f as Float:
+            return String(f)
+        case let n as NSNumber:
+            return n.stringValue
         default:
             return nil
         }

@@ -149,6 +149,8 @@ final class SkillCRUDService {
             safe = url.path.hasPrefix(path)
         case .project:
             safe = path.hasPrefix(skill.location.basePath.path)
+        case .codexProject:
+            safe = path.hasPrefix(skill.location.basePath.path)
         case .legacyCommand:
             safe = path.hasPrefix(FileSystemPaths.legacyCommandsURL(settings: settings).path)
         case .plugin(_, _, let skillsURL):

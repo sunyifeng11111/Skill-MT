@@ -221,6 +221,8 @@ struct SkillDetailView: View {
             return badge(String(localized: "Legacy Command"), color: .orange, icon: "terminal")
         case .project(let path):
             return badge(URL(fileURLWithPath: path).lastPathComponent, color: .accentColor, icon: "folder")
+        case .codexProject(let path):
+            return badge(URL(fileURLWithPath: path).lastPathComponent, color: .accentColor, icon: "folder")
         case .plugin(_, let name, _):
             return badge(name, color: .purple, icon: "puzzlepiece.extension")
         }
@@ -271,7 +273,7 @@ struct SkillDetailView: View {
                 Label("Export", systemImage: "square.and.arrow.up")
             }
             .disabled(skill.isLegacyCommand || isPluginSkill)
-            .help(isPluginSkill ? "Plugin skills cannot be exported" : skill.isLegacyCommand ? "Legacy commands cannot be exported" : "Export this skill as a .skillpack archive")
+            .help(isPluginSkill ? "Plugin skills cannot be exported" : skill.isLegacyCommand ? "Legacy commands cannot be exported" : "Export this skill as a ZIP archive")
 
             Button {
                 appState.skillToEdit = skill

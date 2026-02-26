@@ -28,6 +28,8 @@ final class AppState {
     var legacyCommands: [Skill] = []
     /// project URL path → [Skill]
     var projectSkills: [String: [Skill]] = [:]
+    /// project URL path → [Codex project skills]
+    var codexProjectSkills: [String: [Skill]] = [:]
     /// plugin id → [Skill]
     var pluginSkills: [String: [Skill]] = [:]
     /// Ordered list of monitored project root paths (persisted)
@@ -48,8 +50,20 @@ final class AppState {
     var selectedProvider: SkillProvider = .claude {
         didSet {
             UserDefaults.standard.set(selectedProvider.rawValue, forKey: "selectedProvider")
+            if selectedProvider == .codex {
+                preferredCreateLocation = .codexPersonal
+            } else {
+                if case .codexPersonal = preferredCreateLocation {
+                    preferredCreateLocation = .personal
+                }
+                if case .codexProject = preferredCreateLocation {
+                    preferredCreateLocation = .personal
+                }
+            }
         }
     }
+    /// Preferred target location when opening "Create Skill".
+    var preferredCreateLocation: SkillLocation = .personal
 
     // MARK: - CRUD Sheet State
 
@@ -74,7 +88,7 @@ final class AppState {
                 + projectSkills.values.flatMap { $0 }
                 + pluginSkills.values.flatMap { $0 }
         case .codex:
-            return codexPersonalSkills + codexSystemSkills
+            return codexPersonalSkills + codexSystemSkills + codexProjectSkills.values.flatMap { $0 }
         }
     }
 
@@ -96,6 +110,10 @@ final class AppState {
 
     func filteredProjectSkills(for path: String) -> [Skill] {
         filter(projectSkills[path] ?? [])
+    }
+
+    func filteredCodexProjectSkills(for path: String) -> [Skill] {
+        filter(codexProjectSkills[path] ?? [])
     }
 
     func filteredPluginSkills(for id: String) -> [Skill] {
@@ -145,6 +163,10 @@ final class AppState {
             let path = url.path
             projectSkills[path] = await Task.detached(priority: .userInitiated) {
                 (try? FileSystemService().discoverProjectSkills(
+                    projectPath: URL(fileURLWithPath: path))) ?? []
+            }.value
+            codexProjectSkills[path] = await Task.detached(priority: .userInitiated) {
+                (try? FileSystemService().discoverCodexProjectSkills(
                     projectPath: URL(fileURLWithPath: path))) ?? []
             }.value
         }
@@ -218,22 +240,20 @@ final class AppState {
 
     @MainActor
     func exportSkill(_ skill: Skill) {
-        let panel = NSOpenPanel()
+        let panel = NSSavePanel()
         panel.title = "Export Skill"
-        panel.message = "Choose a destination folder for \"\(skill.name)\""
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
+        panel.message = "Choose where to save \"\(skill.name).zip\""
         panel.canCreateDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.prompt = "Export Here"
+        panel.allowedContentTypes = [.zip]
+        panel.nameFieldStringValue = "\(skill.name).zip"
+        panel.prompt = "Export"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         Task {
             do {
                 try await Task.detached(priority: .userInitiated) {
                     try SkillExportService().export(skill, to: url)
                 }.value
-                let exported = url.appendingPathComponent(skill.name)
-                NSWorkspace.shared.activateFileViewerSelecting([exported])
+                NSWorkspace.shared.activateFileViewerSelecting([url])
             } catch {
                 await MainActor.run { self.lastError = error.localizedDescription }
             }
@@ -324,13 +344,18 @@ final class AppState {
         let skills = await Task.detached {
             (try? FileSystemService().discoverProjectSkills(projectPath: URL(fileURLWithPath: path))) ?? []
         }.value
+        let codexSkills = await Task.detached {
+            (try? FileSystemService().discoverCodexProjectSkills(projectPath: URL(fileURLWithPath: path))) ?? []
+        }.value
         projectSkills[url.path] = skills
+        codexProjectSkills[url.path] = codexSkills
         persistProjectPaths()
     }
 
     @MainActor func removeProject(_ url: URL) {
         monitoredProjectURLs.removeAll { $0 == url }
         projectSkills.removeValue(forKey: url.path)
+        codexProjectSkills.removeValue(forKey: url.path)
         persistProjectPaths()
     }
 

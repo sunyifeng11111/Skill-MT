@@ -77,6 +77,12 @@ final class SkillModelTests: XCTestCase {
         XCTAssertEqual(base.path, "/Users/sun/myapp/.claude/skills")
     }
 
+    func testSkillLocation_basePath_codexProject() {
+        let loc = SkillLocation.codexProject(path: "/Users/sun/myapp")
+        let base = loc.basePath
+        XCTAssertEqual(base.path, "/Users/sun/myapp/.agents/skills")
+    }
+
     func testSkillLocation_basePath_codexPersonal() {
         let base = SkillLocation.codexPersonal.basePath
         XCTAssertTrue(base.path.hasSuffix("/skills"))
@@ -91,6 +97,7 @@ final class SkillModelTests: XCTestCase {
         XCTAssertTrue(SkillLocation.codexSystem(path: "/tmp/system").isReadOnly)
         XCTAssertTrue(SkillLocation.plugin(id: "p", name: "plugin", skillsURL: "/tmp").isReadOnly)
         XCTAssertFalse(SkillLocation.codexPersonal.isReadOnly)
+        XCTAssertFalse(SkillLocation.codexProject(path: "/tmp/project").isReadOnly)
         XCTAssertFalse(SkillLocation.personal.isReadOnly)
     }
 

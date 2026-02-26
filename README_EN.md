@@ -15,6 +15,7 @@ If you use Claude Code, the Skills feature lets you save common AI instructions 
 ## Download
 
 [**Download Latest Release →**](https://github.com/sunyifeng11111/Skill-MT/releases/latest)
+Current stable version: `v1.2.1` (2026-02-26)
 
 ## Features
 

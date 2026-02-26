@@ -25,9 +25,11 @@ struct SkillListView: View {
             switch selectedSource {
             case .personal:
                 return state.filteredCodexPersonalSkills
+            case .project(let url):
+                return state.filteredCodexProjectSkills(for: url.path)
             case .codexSystem:
                 return state.filteredCodexSystemSkills
-            case .project, .legacyCommands, .plugin:
+            case .legacyCommands, .plugin:
                 return []
             }
         }
@@ -46,7 +48,7 @@ struct SkillListView: View {
 
             SkillFilterBar(
                 searchText: $state.searchText,
-                scopeLabel: selectedSource.displayName(provider: state.selectedProvider)
+                scopeLabel: sourceDisplayName(selectedSource)
             )
 
             if !selectedIDs.isEmpty {
@@ -84,6 +86,13 @@ struct SkillListView: View {
             selectedSource = .personal
             selectedIDs = []
             state.selectedSkill = nil
+            updatePreferredCreateLocation()
+        }
+        .onChange(of: selectedSource) { _, _ in
+            updatePreferredCreateLocation()
+        }
+        .onAppear {
+            updatePreferredCreateLocation()
         }
         .alert(
             "Delete \"\(state.skillToDelete?.displayName ?? "")\"?",
@@ -126,31 +135,34 @@ struct SkillListView: View {
                 Label("Personal Skills", systemImage: "person.crop.circle")
             }
 
-            if state.selectedProvider == .claude {
-                if !state.monitoredProjectURLs.isEmpty {
-                    Divider()
-                    ForEach(state.monitoredProjectURLs, id: \.path) { url in
-                        Menu {
-                            Button {
-                                selectedSource = .project(url: url)
-                            } label: {
-                                Label("Switch to \(url.lastPathComponent)", systemImage: "arrow.right.circle")
-                            }
-                            Divider()
-                            Button(role: .destructive) {
-                                if case .project(let sel) = selectedSource, sel == url {
-                                    selectedSource = .personal
-                                }
-                                state.removeProject(url)
-                            } label: {
-                                Label("Remove Project", systemImage: "minus.circle")
-                            }
+            if !state.monitoredProjectURLs.isEmpty {
+                Divider()
+                ForEach(state.monitoredProjectURLs, id: \.path) { url in
+                    Menu {
+                        Button {
+                            selectedSource = .project(url: url)
                         } label: {
-                            Label(url.lastPathComponent, systemImage: "folder")
+                            Label(
+                                String(format: localization.string("Switch to %@"), url.lastPathComponent),
+                                systemImage: "arrow.right.circle"
+                            )
                         }
+                        Divider()
+                        Button(role: .destructive) {
+                            if case .project(let sel) = selectedSource, sel == url {
+                                selectedSource = .personal
+                            }
+                            state.removeProject(url)
+                        } label: {
+                            Label(localization.string("Remove Project"), systemImage: "minus.circle")
+                        }
+                    } label: {
+                        Label(url.lastPathComponent, systemImage: "folder")
                     }
                 }
+            }
 
+            if state.selectedProvider == .claude {
                 if !state.legacyCommands.isEmpty {
                     Divider()
                     Button {
@@ -185,13 +197,19 @@ struct SkillListView: View {
                 } label: {
                     Label("System Skills", systemImage: "gearshape")
                 }
+                Divider()
+                Button {
+                    addProject()
+                } label: {
+                    Label(localization.string("Add Project…"), systemImage: "folder.badge.plus")
+                }
             }
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: selectedSource.icon)
                     .foregroundStyle(Color.accentColor)
                     .frame(width: 18)
-                Text(selectedSource.displayName(provider: state.selectedProvider))
+                Text(sourceDisplayName(selectedSource))
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                 Image(systemName: "chevron.down")
@@ -394,6 +412,40 @@ struct SkillListView: View {
             Task { await state.addProject(url) }
         }
     }
+
+    private func updatePreferredCreateLocation() {
+        switch state.selectedProvider {
+        case .codex:
+            switch selectedSource {
+            case .project(let url):
+                state.preferredCreateLocation = .codexProject(path: url.path)
+            default:
+                state.preferredCreateLocation = .codexPersonal
+            }
+        case .claude:
+            switch selectedSource {
+            case .project(let url):
+                state.preferredCreateLocation = .project(path: url.path)
+            default:
+                state.preferredCreateLocation = .personal
+            }
+        }
+    }
+
+    private func sourceDisplayName(_ source: SkillSource) -> String {
+        switch source {
+        case .personal:
+            return localization.string("Personal Skills")
+        case .project(let url):
+            return url.lastPathComponent
+        case .legacyCommands:
+            return localization.string("Legacy Commands")
+        case .plugin(let id):
+            return id.components(separatedBy: "@").first ?? id
+        case .codexSystem:
+            return localization.string("System Skills")
+        }
+    }
 }
 
 // MARK: - Skill Source
@@ -404,21 +456,6 @@ enum SkillSource: Hashable {
     case legacyCommands
     case plugin(id: String)
     case codexSystem
-
-    func displayName(provider _: SkillProvider) -> String {
-        switch self {
-        case .personal:
-            return String(localized: "Personal Skills")
-        case .project(let u):
-            return u.lastPathComponent
-        case .legacyCommands:
-            return String(localized: "Legacy Commands")
-        case .plugin(let id):
-            return id.components(separatedBy: "@").first ?? id
-        case .codexSystem:
-            return String(localized: "System Skills")
-        }
-    }
 
     var icon: String {
         switch self {
