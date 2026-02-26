@@ -404,8 +404,15 @@ final class AppState {
         do {
             let localDMG = try await updateService.downloadLatestDMG(from: release)
             pendingDownloadURL = localDMG
-            NSWorkspace.shared.open(localDMG)
-            updateStatusMessage = String(localized: "Update package downloaded and opened.")
+            let opened = NSWorkspace.shared.open(localDMG)
+            if opened {
+                updateStatusMessage = String(localized: "Update package opened. Skill-MT will now quit so you can finish installation.")
+                // Give Finder a brief moment to mount and foreground the DMG window before quitting.
+                try? await Task.sleep(nanoseconds: 800_000_000)
+                NSApp.terminate(nil)
+            } else {
+                updateStatusMessage = String(localized: "Failed to open update package.")
+            }
         } catch {
             updateStatusMessage = error.localizedDescription
             lastError = error.localizedDescription

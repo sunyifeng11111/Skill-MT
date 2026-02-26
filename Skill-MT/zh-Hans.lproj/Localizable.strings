@@ -34,6 +34,8 @@
 "You're on the latest version." = "当前已是最新版本。";
 "No stable release found." = "未找到稳定版发布。";
 "Update package downloaded and opened." = "更新包已下载并打开。";
+"Update package opened. Skill-MT will now quit so you can finish installation." = "更新包已打开。Skill-MT 将立即退出，便于你完成安装。";
+"Failed to open update package." = "无法打开更新包。";
 
 /* Skill List */
 "Personal Skills" = "全局技能";

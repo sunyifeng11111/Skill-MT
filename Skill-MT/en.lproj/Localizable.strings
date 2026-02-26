@@ -35,6 +35,8 @@
 "You're on the latest version." = "You're on the latest version.";
 "No stable release found." = "No stable release found.";
 "Update package downloaded and opened." = "Update package downloaded and opened.";
+"Update package opened. Skill-MT will now quit so you can finish installation." = "Update package opened. Skill-MT will now quit so you can finish installation.";
+"Failed to open update package." = "Failed to open update package.";
 
 /* Skill List */
 "Personal Skills" = "Global Skills";
