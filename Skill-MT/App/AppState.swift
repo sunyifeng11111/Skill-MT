@@ -408,8 +408,15 @@ final class AppState {
             if opened {
                 updateStatusMessage = String(localized: "Update package opened. Skill-MT will now quit so you can finish installation.")
                 // Give Finder a brief moment to mount and foreground the DMG window before quitting.
-                try? await Task.sleep(nanoseconds: 800_000_000)
+                try? await Task.sleep(nanoseconds: 600_000_000)
                 NSApp.terminate(nil)
+
+                // Some systems may keep the process alive briefly; force quit as a fallback to avoid install lock.
+                try? await Task.sleep(nanoseconds: 900_000_000)
+                let current = NSRunningApplication.current
+                if !current.isTerminated {
+                    current.forceTerminate()
+                }
             } else {
                 updateStatusMessage = String(localized: "Failed to open update package.")
             }
