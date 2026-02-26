@@ -67,6 +67,7 @@ struct ContentView: View {
         .task {
             await appState.loadAllSkills()
             startWatching()
+            await appState.performAutomaticUpdateCheckIfNeeded()
         }
         .onChange(of: appState.settingsRevision) { _, _ in
             startWatching()
@@ -102,6 +103,17 @@ struct ContentView: View {
             Button("OK") { appState.lastError = nil }
         } message: {
             Text(appState.lastError ?? "")
+        }
+        .alert(String(localized: "Update Available"), isPresented: $appState.showUpdatePrompt) {
+            Button(String(localized: "Download Update")) {
+                Task { await appState.downloadAndOpenLatestUpdate() }
+            }
+            Button(String(localized: "View Release Notes")) {
+                appState.openLatestReleasePage()
+            }
+            Button(String(localized: "Later"), role: .cancel) { }
+        } message: {
+            Text(String(localized: "A newer version is available."))
         }
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
             guard let provider = providers.first(where: {

@@ -51,6 +51,8 @@ struct SettingsView: View {
                         Text(localization.string("Skill-MT preferences"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
                     }
                     Spacer()
                 }
@@ -59,18 +61,19 @@ struct SettingsView: View {
 
                 Divider()
 
-                Group {
-                    switch selectedSection ?? .general {
-                    case .general:
-                        generalSection
-                    case .paths:
-                        pathsSection
+                ScrollView {
+                    Group {
+                        switch selectedSection ?? .general {
+                        case .general:
+                            generalSection
+                        case .paths:
+                            pathsSection
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 20)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 20)
-
-                Spacer()
 
                 Divider()
 
@@ -126,10 +129,47 @@ struct SettingsView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
+                Text(appState.localVersion)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text(localization.string("Latest"))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(appState.latestVersionText)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack(spacing: 8) {
+                    Button(localization.string("Check for Updates…")) {
+                        Task { await appState.checkForUpdates(manual: true) }
+                    }
+                    .disabled(appState.isCheckingUpdates)
+
+                    if appState.latestReleaseInfo != nil {
+                        Button(localization.string("Download Update")) {
+                            Task { await appState.downloadAndOpenLatestUpdate() }
+                        }
+                    }
+                }
+
+                if let status = appState.updateStatusMessage {
+                    Text(status)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(12)
+            .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 10))
         }
     }
 

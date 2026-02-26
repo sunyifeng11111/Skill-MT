@@ -24,6 +24,16 @@
 "Reset" = "恢复默认";
 "Path does not exist yet. Skills list will be empty until created." = "该路径目前不存在；创建目录前技能列表会为空。";
 "Project skills path remains <project>/.claude/skills and is not overridden by this setting." = "项目技能路径始终为 <project>/.claude/skills，不受此设置影响。";
+"Latest" = "最新版本";
+"Check for Updates…" = "检查更新…";
+"Download Update" = "下载更新";
+"Update Available" = "发现新版本";
+"A newer version is available." = "已有新版本可用。";
+"View Release Notes" = "查看发布说明";
+"Later" = "稍后";
+"You're on the latest version." = "当前已是最新版本。";
+"No stable release found." = "未找到稳定版发布。";
+"Update package downloaded and opened." = "更新包已下载并打开。";
 
 /* Skill List */
 "Personal Skills" = "个人技能";

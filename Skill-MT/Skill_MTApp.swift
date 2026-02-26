@@ -29,6 +29,11 @@ struct Skill_MTApp: App {
                 }
                 .keyboardShortcut("i", modifiers: .command)
             }
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") {
+                    Task { await appState.checkForUpdates(manual: true) }
+                }
+            }
         }
     }
 }

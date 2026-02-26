@@ -17,6 +17,8 @@ enum AppStateError: LocalizedError {
 final class AppState {
 
     let settings: AppSettings
+    private let updateService = UpdateService()
+    private let versionService = AppVersionService()
 
     // MARK: - Skill Data
 
@@ -38,6 +40,11 @@ final class AppState {
     var selectedSkill: Skill?
     var searchText: String = ""
     var settingsRevision: Int = 0
+    var isCheckingUpdates: Bool = false
+    var latestReleaseInfo: ReleaseInfo?
+    var updateStatusMessage: String?
+    var showUpdatePrompt: Bool = false
+    var pendingDownloadURL: URL?
     var selectedProvider: SkillProvider = .claude {
         didSet {
             UserDefaults.standard.set(selectedProvider.rawValue, forKey: "selectedProvider")
@@ -56,6 +63,7 @@ final class AppState {
     var showImportSheet: Bool = false
     var showSettingsSheet: Bool = false
     var lastError: String?
+    var lastUpdateCheckAt: Date?
 
     // MARK: - Computed
 
@@ -101,6 +109,14 @@ final class AppState {
             $0.displayName.lowercased().contains(query) ||
             ($0.frontmatter.description?.lowercased().contains(query) ?? false)
         }
+    }
+
+    var localVersion: String {
+        versionService.localVersion()
+    }
+
+    var latestVersionText: String {
+        latestReleaseInfo?.version ?? "-"
     }
 
     // MARK: - Load
@@ -324,6 +340,64 @@ final class AppState {
         await loadAllSkills()
     }
 
+    // MARK: - Updates
+
+    @MainActor
+    func checkForUpdates(manual: Bool) async {
+        if isCheckingUpdates { return }
+        if !manual, !shouldRunAutomaticUpdateCheck() { return }
+
+        isCheckingUpdates = true
+        defer { isCheckingUpdates = false }
+
+        let result = await updateService.checkForUpdates()
+        lastUpdateCheckAt = Date()
+        persistLastUpdateCheckAt()
+
+        switch result {
+        case .upToDate:
+            updateStatusMessage = String(localized: "You're on the latest version.")
+        case .updateAvailable(let release):
+            latestReleaseInfo = release
+            updateStatusMessage = String(localized: "Update available: \(release.version)")
+            showUpdatePrompt = true
+        case .noStableRelease:
+            updateStatusMessage = String(localized: "No stable release found.")
+        case .networkError(let message):
+            updateStatusMessage = message
+        }
+    }
+
+    @MainActor
+    func performAutomaticUpdateCheckIfNeeded() async {
+        await checkForUpdates(manual: false)
+    }
+
+    @MainActor
+    func downloadAndOpenLatestUpdate() async {
+        guard let release = latestReleaseInfo else { return }
+        do {
+            let localDMG = try await updateService.downloadLatestDMG(from: release)
+            pendingDownloadURL = localDMG
+            NSWorkspace.shared.open(localDMG)
+            updateStatusMessage = String(localized: "Update package downloaded and opened.")
+        } catch {
+            updateStatusMessage = error.localizedDescription
+            lastError = error.localizedDescription
+        }
+    }
+
+    @MainActor
+    func openLatestReleasePage() {
+        guard let url = latestReleaseInfo?.releaseURL else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    private func shouldRunAutomaticUpdateCheck() -> Bool {
+        guard let last = lastUpdateCheckAt else { return true }
+        return Date().timeIntervalSince(last) >= 24 * 60 * 60
+    }
+
     // MARK: - Persistence (project paths via UserDefaults)
 
     init(settings: AppSettings = .shared) {
@@ -332,6 +406,9 @@ final class AppState {
         monitoredProjectURLs = saved.map { URL(fileURLWithPath: $0) }
         let providerRaw = UserDefaults.standard.string(forKey: "selectedProvider") ?? ""
         selectedProvider = SkillProvider(rawValue: providerRaw) ?? .claude
+        if let ts = UserDefaults.standard.object(forKey: "lastUpdateCheckAt") as? TimeInterval {
+            lastUpdateCheckAt = Date(timeIntervalSince1970: ts)
+        }
     }
 
     private func persistProjectPaths() {
@@ -339,5 +416,9 @@ final class AppState {
             monitoredProjectURLs.map(\.path),
             forKey: "monitoredProjectPaths"
         )
+    }
+
+    private func persistLastUpdateCheckAt() {
+        UserDefaults.standard.set(lastUpdateCheckAt?.timeIntervalSince1970, forKey: "lastUpdateCheckAt")
     }
 }

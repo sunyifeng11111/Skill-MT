@@ -25,6 +25,16 @@
 "Reset" = "Reset";
 "Path does not exist yet. Skills list will be empty until created." = "Path does not exist yet. Skills list will be empty until created.";
 "Project skills path remains <project>/.claude/skills and is not overridden by this setting." = "Project skills path remains <project>/.claude/skills and is not overridden by this setting.";
+"Latest" = "Latest";
+"Check for Updates…" = "Check for Updates…";
+"Download Update" = "Download Update";
+"Update Available" = "Update Available";
+"A newer version is available." = "A newer version is available.";
+"View Release Notes" = "View Release Notes";
+"Later" = "Later";
+"You're on the latest version." = "You're on the latest version.";
+"No stable release found." = "No stable release found.";
+"Update package downloaded and opened." = "Update package downloaded and opened.";
 
 /* Skill List */
 "Personal Skills" = "Personal Skills";
