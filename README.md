@@ -2,7 +2,7 @@
 
 <img src="docs/logo.png" width="128" />
 
-**Skill-MT** 是一个用于管理 Claude Code Skills 的 macOS 图形界面工具。
+**Skill-MT** 是一个用于管理 Claude Code / Codex Skills 的 macOS 图形界面工具。
 
 如果你在用 Claude Code，Skills 功能可以把常用的 AI 指令保存成文件随时调用。但管理这些文件一直要靠手动操作文件夹。Skill-MT 提供了一个简洁的 GUI，让你不用碰命令行就能管理所有技能。
 
@@ -21,7 +21,8 @@
 - **创建 / 编辑 / 删除**技能，支持编辑 frontmatter 和 Markdown 内容
 - **启用 / 禁用**技能（通过重命名文件实现，不删除数据）
 - **导入**技能文件夹或 ZIP 压缩包，**导出**分享给他人
-- 管理**个人技能**、**项目技能**、**旧版命令**和**插件技能**
+- 管理 Claude 的**个人技能**、**项目技能**、**旧版命令**和**插件技能**
+- 管理 Codex 的**个人技能**与**系统技能**（系统技能只读）
 - 实时**搜索**技能名称和描述
 - 支持**中文 / 英文**界面
 
@@ -45,7 +46,9 @@ open Skill-MT.xcodeproj
 
 ## Skills 是什么
 
-Skills 是存储在 `~/.claude/skills/` 下的 Markdown 文件，带有 YAML frontmatter，作为 Claude Code CLI 的可复用指令。详见 [Claude Code 官方文档](https://docs.anthropic.com/en/docs/claude-code/skills)。
+Skills 是带有 YAML frontmatter 的 Markdown 指令文件：
+- Claude: `~/.claude/skills/`
+- Codex: `~/.codex/skills/`（系统技能位于 `~/.codex/skills/.system/`）
 
 ## 截图
 

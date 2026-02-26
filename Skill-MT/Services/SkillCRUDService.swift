@@ -30,9 +30,11 @@ enum SkillCRUDError: LocalizedError {
 final class SkillCRUDService {
 
     private let fileManager: FileManager
+    private let settings: AppSettings
 
-    init(fileManager: FileManager = .default) {
+    init(fileManager: FileManager = .default, settings: AppSettings = .shared) {
         self.fileManager = fileManager
+        self.settings = settings
     }
 
     // MARK: - Create
@@ -140,11 +142,15 @@ final class SkillCRUDService {
         let safe: Bool
         switch skill.location {
         case .personal:
-            safe = path.hasPrefix(FileSystemPaths.personalSkillsURL.path)
+            safe = path.hasPrefix(FileSystemPaths.personalSkillsURL(settings: settings).path)
+        case .codexPersonal:
+            safe = path.hasPrefix(FileSystemPaths.codexSkillsURL(settings: settings).path)
+        case .codexSystem(let path):
+            safe = url.path.hasPrefix(path)
         case .project:
             safe = path.hasPrefix(skill.location.basePath.path)
         case .legacyCommand:
-            safe = path.hasPrefix(FileSystemPaths.legacyCommandsURL.path)
+            safe = path.hasPrefix(FileSystemPaths.legacyCommandsURL(settings: settings).path)
         case .plugin(_, _, let skillsURL):
             safe = path.hasPrefix(skillsURL)
         }

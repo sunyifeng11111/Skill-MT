@@ -16,17 +16,28 @@
 "Display Language" = "Display Language";
 "System Default" = "System Default";
 "Restart may be required for full effect." = "Restart may be required for full effect.";
+"General" = "General";
+"Paths" = "Paths";
+"Directories" = "Directories";
+"Claude Home Directory" = "Claude Home Directory";
+"Codex Home Directory" = "Codex Home Directory";
+"Choose…" = "Choose…";
+"Reset" = "Reset";
+"Path does not exist yet. Skills list will be empty until created." = "Path does not exist yet. Skills list will be empty until created.";
+"Project skills path remains <project>/.claude/skills and is not overridden by this setting." = "Project skills path remains <project>/.claude/skills and is not overridden by this setting.";
 
 /* Skill List */
 "Personal Skills" = "Personal Skills";
 "Legacy Commands" = "Legacy Commands";
 "No Skills Yet" = "No Skills Yet";
 "Create your first skill with the + button above." = "Create your first skill with the + button above.";
+"Skills are reusable instructions for coding assistants. Create your first skill with the + button above." = "Skills are reusable instructions for coding assistants. Create your first skill with the + button above.";
 "No Results" = "No Results";
 "Import Skill" = "Import Skill";
 "Add Project…" = "Add Project…";
 "New Skill" = "New Skill";
 "Search skills…" = "Search skills…";
+"System Skills" = "System Skills";
 
 /* Skill Row / Context Menu */
 "Show in Finder" = "Show in Finder";
@@ -39,6 +50,7 @@
 /* Skill Detail */
 "Select a Skill" = "Select a Skill";
 "Choose a skill from the list to view its details." = "Choose a skill from the list to view its details.";
+"Skills are reusable instructions for coding assistants. Select one from the list to view its details." = "Skills are reusable instructions for coding assistants. Select one from the list to view its details.";
 "Show in Finder" = "Show in Finder";
 "Reveal in Finder" = "Reveal in Finder";
 "Disabled" = "Disabled";
@@ -47,10 +59,16 @@
 "Supporting Files" = "Supporting Files";
 "No content" = "No content";
 "Content" = "Content";
+"Plugin skill — read only" = "Plugin skill — read only";
+"Fork to Personal Skills to edit or customize." = "Fork to Personal Skills to edit or customize.";
+"Fork to Personal" = "Fork to Personal";
+"System skill — read only" = "System skill — read only";
+"Built-in Codex skills cannot be edited or deleted." = "Built-in Codex skills cannot be edited or deleted.";
 
 /* Create Skill */
 "New Skill" = "New Skill";
 "Create a local skill for Claude Code" = "Create a local skill for Claude Code";
+"Create a local skill" = "Create a local skill";
 "Identity" = "Identity";
 "Skill name" = "Skill name";
 "e.g. code-reviewer" = "e.g. code-reviewer";
@@ -81,5 +99,6 @@
 "Hidden" = "Hidden";
 "Fork" = "Fork";
 "Personal" = "Personal";
+"System Skill" = "System";
 "Legacy Command" = "Legacy Command";
 "Version" = "Version";

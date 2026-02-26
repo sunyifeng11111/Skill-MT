@@ -36,15 +36,29 @@ protocol FileSystemServiceProtocol {
 final class FileSystemService: FileSystemServiceProtocol {
 
     private let fileManager: FileManager
+    private let settings: AppSettings
 
-    init(fileManager: FileManager = .default) {
+    init(fileManager: FileManager = .default, settings: AppSettings = .shared) {
         self.fileManager = fileManager
+        self.settings = settings
     }
 
     // MARK: - Convenience (uses real ~/.claude paths)
 
     func discoverPersonalSkills() throws -> [Skill] {
-        try discoverSkills(in: FileSystemPaths.personalSkillsURL, location: .personal)
+        try discoverSkills(in: FileSystemPaths.personalSkillsURL(settings: settings), location: .personal)
+    }
+
+    func discoverCodexPersonalSkills() throws -> [Skill] {
+        try discoverSkills(in: FileSystemPaths.codexSkillsURL(settings: settings), location: .codexPersonal)
+    }
+
+    func discoverCodexSystemSkills() throws -> [Skill] {
+        let systemURL = FileSystemPaths.codexSystemSkillsURL(settings: settings)
+        return try discoverSkills(
+            in: systemURL,
+            location: .codexSystem(path: systemURL.path)
+        )
     }
 
     func discoverProjectSkills(projectPath: URL) throws -> [Skill] {
@@ -55,7 +69,7 @@ final class FileSystemService: FileSystemServiceProtocol {
     }
 
     func discoverLegacyCommands() throws -> [Skill] {
-        try discoverLegacyCommands(in: FileSystemPaths.legacyCommandsURL)
+        try discoverLegacyCommands(in: FileSystemPaths.legacyCommandsURL(settings: settings))
     }
 
     // MARK: - Protocol Implementation

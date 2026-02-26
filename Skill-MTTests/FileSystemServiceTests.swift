@@ -22,15 +22,27 @@ final class FileSystemServiceTests: XCTestCase {
     // MARK: - Path Resolution
 
     func testPersonalSkillsPath() {
-        let path = FileSystemPaths.personalSkillsURL.path
+        let path = FileSystemPaths.personalSkillsURL(settings: makeDefaultSettings()).path
         XCTAssertTrue(path.contains(".claude/skills"),
                       "Expected path to contain .claude/skills, got: \(path)")
     }
 
     func testLegacyCommandsPath() {
-        let path = FileSystemPaths.legacyCommandsURL.path
+        let path = FileSystemPaths.legacyCommandsURL(settings: makeDefaultSettings()).path
         XCTAssertTrue(path.contains(".claude/commands"),
                       "Expected path to contain .claude/commands, got: \(path)")
+    }
+
+    func testCodexSkillsPath() {
+        let path = FileSystemPaths.codexSkillsURL(settings: makeDefaultSettings()).path
+        XCTAssertTrue(path.contains(".codex/skills"),
+                      "Expected path to contain .codex/skills, got: \(path)")
+    }
+
+    func testCodexSystemSkillsPath() {
+        let path = FileSystemPaths.codexSystemSkillsURL(settings: makeDefaultSettings()).path
+        XCTAssertTrue(path.contains(".codex/skills/.system"),
+                      "Expected path to contain .codex/skills/.system, got: \(path)")
     }
 
     // MARK: - readSkill
@@ -169,6 +181,20 @@ final class FileSystemServiceTests: XCTestCase {
         XCTAssertEqual(skills.first?.frontmatter.name, "good")
     }
 
+    func testDiscoverSkills_skipsHiddenSystemDirectory() throws {
+        let skillsDir = tempDir.appendingPathComponent("skills")
+        try FileManager.default.createDirectory(at: skillsDir, withIntermediateDirectories: true)
+        createSkillIn(directory: skillsDir, name: "visible-skill", content: "---\nname: visible\n---\n# Visible")
+
+        let hiddenSystemDir = skillsDir.appendingPathComponent(".system")
+        try FileManager.default.createDirectory(at: hiddenSystemDir, withIntermediateDirectories: true)
+        createSkillIn(directory: hiddenSystemDir, name: "internal-skill", content: "---\nname: internal\n---\n# Internal")
+
+        let skills = try service.discoverSkills(in: skillsDir, location: .codexPersonal)
+        XCTAssertEqual(skills.count, 1)
+        XCTAssertEqual(skills.first?.frontmatter.name, "visible")
+    }
+
     // MARK: - discoverLegacyCommands
 
     func testDiscoverLegacyCommands_multipleCommands() throws {
@@ -216,5 +242,12 @@ final class FileSystemServiceTests: XCTestCase {
     private func createCommandIn(directory: URL, name: String, content: String) {
         let fileURL = directory.appendingPathComponent("\(name).md")
         try? content.write(to: fileURL, atomically: true, encoding: .utf8)
+    }
+
+    private func makeDefaultSettings() -> AppSettings {
+        let suiteName = "SkillMTTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        return AppSettings(defaults: defaults)
     }
 }

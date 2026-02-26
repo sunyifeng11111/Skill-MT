@@ -2,7 +2,7 @@
 
 <img src="docs/logo.png" width="128" />
 
-**Skill-MT** is a macOS GUI tool for managing Claude Code Skills.
+**Skill-MT** is a macOS GUI tool for managing Claude Code / Codex Skills.
 
 If you use Claude Code, the Skills feature lets you save common AI instructions as files and invoke them anytime. But managing those files has always required manual folder operations. Skill-MT provides a clean GUI so you can manage all your skills without touching the command line.
 
@@ -21,7 +21,8 @@ If you use Claude Code, the Skills feature lets you save common AI instructions 
 - **Create / Edit / Delete** skills with frontmatter and Markdown content editing
 - **Enable / Disable** skills (via file renaming — no data is lost)
 - **Import** skill folders or ZIP archives, **export** to share with others
-- Manage **personal skills**, **project skills**, **legacy commands**, and **plugin skills**
+- Manage Claude **personal skills**, **project skills**, **legacy commands**, and **plugin skills**
+- Manage Codex **personal skills** and **system skills** (system skills are read-only)
 - Real-time **search** by skill name and description
 - Supports **Chinese / English** UI
 
@@ -45,7 +46,9 @@ Press `⌘R` in Xcode to run.
 
 ## What are Skills?
 
-Skills are Markdown files with YAML frontmatter stored under `~/.claude/skills/`, used as reusable instructions for the Claude Code CLI. See the [Claude Code documentation](https://docs.anthropic.com/en/docs/claude-code/skills) for details.
+Skills are Markdown files with YAML frontmatter used as reusable agent instructions:
+- Claude: `~/.claude/skills/`
+- Codex: `~/.codex/skills/` (system skills live under `~/.codex/skills/.system/`)
 
 ## Screenshots
 

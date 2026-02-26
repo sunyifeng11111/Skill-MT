@@ -9,6 +9,8 @@ struct SkillDetailView: View {
             VStack(alignment: .leading, spacing: 12) {
                 if isPluginSkill {
                     pluginReadOnlyBanner
+                } else if isCodexSystemSkill {
+                    codexSystemReadOnlyBanner
                 }
                 headerSection
                 frontmatterSection
@@ -73,6 +75,28 @@ struct SkillDetailView: View {
         .overlay {
             RoundedRectangle(cornerRadius: 10)
                 .strokeBorder(Color.purple.opacity(0.2), lineWidth: 0.5)
+        }
+    }
+
+    private var codexSystemReadOnlyBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "gearshape")
+                .foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("System skill — read only")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                Text("Built-in Codex skills cannot be edited or deleted.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(12)
+        .background(Color.orange.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(Color.orange.opacity(0.2), lineWidth: 0.5)
         }
     }
 
@@ -189,6 +213,10 @@ struct SkillDetailView: View {
         switch skill.location {
         case .personal:
             return badge(String(localized: "Personal"), color: .accentColor, icon: "person.crop.circle")
+        case .codexPersonal:
+            return badge(String(localized: "Personal"), color: .accentColor, icon: "person.crop.circle")
+        case .codexSystem:
+            return badge(String(localized: "System Skill"), color: .orange, icon: "gearshape")
         case .legacyCommand:
             return badge(String(localized: "Legacy Command"), color: .orange, icon: "terminal")
         case .project(let path):
@@ -212,6 +240,11 @@ struct SkillDetailView: View {
         return false
     }
 
+    private var isCodexSystemSkill: Bool {
+        if case .codexSystem = skill.location { return true }
+        return false
+    }
+
     // MARK: - Toolbar
 
     private var detailToolbar: some ToolbarContent {
@@ -223,7 +256,7 @@ struct SkillDetailView: View {
                       systemImage: skill.isEnabled ? "pause.circle" : "play.circle")
             }
             .help(skill.isEnabled ? "Disable this skill" : "Enable this skill")
-            .disabled(isPluginSkill)
+            .disabled(skill.location.isReadOnly)
 
             Button {
                 NSWorkspace.shared.activateFileViewerSelecting([skill.directoryURL])
@@ -245,8 +278,13 @@ struct SkillDetailView: View {
             } label: {
                 Label("Edit", systemImage: "pencil")
             }
-            .disabled(skill.isLegacyCommand || isPluginSkill)
-            .help(isPluginSkill ? "Plugin skills are read-only" : skill.isLegacyCommand ? "Legacy commands cannot be edited here" : "Edit this skill")
+            .disabled(skill.isLegacyCommand || skill.location.isReadOnly)
+            .help(
+                isPluginSkill ? "Plugin skills are read-only"
+                    : isCodexSystemSkill ? "System skills are read-only"
+                    : skill.isLegacyCommand ? "Legacy commands cannot be edited here"
+                    : "Edit this skill"
+            )
         }
     }
 }

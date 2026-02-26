@@ -18,7 +18,7 @@ struct ContentView: View {
                 EmptyStateView(
                     icon: "bookmark.square",
                     title: String(localized: "Select a Skill"),
-                    message: String(localized: "Skills are reusable instructions that Claude Code can invoke. Select one from the list to view its details."),
+                    message: String(localized: "Skills are reusable instructions for coding assistants. Select one from the list to view its details."),
                     learnMoreURL: URL(string: "https://agentskills.io")
                 )
             }
@@ -37,6 +37,15 @@ struct ContentView: View {
         }
         .toolbarBackground(.hidden, for: .windowToolbar)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                Picker("Provider", selection: $appState.selectedProvider) {
+                    ForEach(SkillProvider.allCases) { provider in
+                        Text(provider.displayName).tag(provider)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 180)
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     appState.showCreateSheet = true
@@ -59,6 +68,12 @@ struct ContentView: View {
             await appState.loadAllSkills()
             startWatching()
         }
+        .onChange(of: appState.settingsRevision) { _, _ in
+            startWatching()
+        }
+        .onChange(of: appState.monitoredProjectURLs) { _, _ in
+            startWatching()
+        }
         .onReceive(NotificationCenter.default.publisher(
             for: NSApplication.willTerminateNotification)
         ) { _ in
@@ -68,7 +83,7 @@ struct ContentView: View {
             CreateSkillView(appState: appState)
         }
         .sheet(isPresented: $appState.showSettingsSheet) {
-            SettingsView()
+            SettingsView(appState: appState)
         }
         .sheet(isPresented: $appState.showImportSheet, onDismiss: {
             if let package = appState.pendingImportPackage {
@@ -114,9 +129,17 @@ struct ContentView: View {
 
     private func startWatching() {
         var watchURLs: [URL] = []
-        let personal = FileSystemPaths.personalSkillsURL
+        let personal = FileSystemPaths.personalSkillsURL(settings: appState.settings)
         if FileManager.default.fileExists(atPath: personal.path) {
             watchURLs.append(personal)
+        }
+        let codexPersonal = FileSystemPaths.codexSkillsURL(settings: appState.settings)
+        if FileManager.default.fileExists(atPath: codexPersonal.path) {
+            watchURLs.append(codexPersonal)
+        }
+        let codexSystem = FileSystemPaths.codexSystemSkillsURL(settings: appState.settings)
+        if FileManager.default.fileExists(atPath: codexSystem.path) {
+            watchURLs.append(codexSystem)
         }
         for url in appState.monitoredProjectURLs {
             let skillsURL = url.appendingPathComponent(".claude/skills")

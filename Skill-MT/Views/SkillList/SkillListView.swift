@@ -7,15 +7,29 @@ struct SkillListView: View {
     @Environment(\.localization) private var localization
 
     private var currentSkills: [Skill] {
-        switch selectedSource {
-        case .personal:
-            return state.filteredPersonalSkills
-        case .project(let url):
-            return state.filteredProjectSkills(for: url.path)
-        case .legacyCommands:
-            return state.filteredLegacyCommands
-        case .plugin(let id):
-            return state.filteredPluginSkills(for: id)
+        switch state.selectedProvider {
+        case .claude:
+            switch selectedSource {
+            case .personal:
+                return state.filteredPersonalSkills
+            case .project(let url):
+                return state.filteredProjectSkills(for: url.path)
+            case .legacyCommands:
+                return state.filteredLegacyCommands
+            case .plugin(let id):
+                return state.filteredPluginSkills(for: id)
+            case .codexSystem:
+                return []
+            }
+        case .codex:
+            switch selectedSource {
+            case .personal:
+                return state.filteredCodexPersonalSkills
+            case .codexSystem:
+                return state.filteredCodexSystemSkills
+            case .project, .legacyCommands, .plugin:
+                return []
+            }
         }
     }
 
@@ -30,7 +44,10 @@ struct SkillListView: View {
             Divider()
                 .opacity(0.4)
 
-            SkillFilterBar(searchText: $state.searchText, scopeLabel: selectedSource.displayName)
+            SkillFilterBar(
+                searchText: $state.searchText,
+                scopeLabel: selectedSource.displayName(provider: state.selectedProvider)
+            )
 
             if !selectedIDs.isEmpty {
                 batchToolbar
@@ -62,6 +79,11 @@ struct SkillListView: View {
             .buttonStyle(.plain)
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
+        }
+        .onChange(of: state.selectedProvider) { _, _ in
+            selectedSource = .personal
+            selectedIDs = []
+            state.selectedSkill = nil
         }
         .alert(
             "Delete \"\(state.skillToDelete?.displayName ?? "")\"?",
@@ -104,63 +126,72 @@ struct SkillListView: View {
                 Label("Personal Skills", systemImage: "person.crop.circle")
             }
 
-            if !state.monitoredProjectURLs.isEmpty {
-                Divider()
-                ForEach(state.monitoredProjectURLs, id: \.path) { url in
-                    Menu {
-                        Button {
-                            selectedSource = .project(url: url)
-                        } label: {
-                            Label("Switch to \(url.lastPathComponent)", systemImage: "arrow.right.circle")
-                        }
-                        Divider()
-                        Button(role: .destructive) {
-                            if case .project(let sel) = selectedSource, sel == url {
-                                selectedSource = .personal
+            if state.selectedProvider == .claude {
+                if !state.monitoredProjectURLs.isEmpty {
+                    Divider()
+                    ForEach(state.monitoredProjectURLs, id: \.path) { url in
+                        Menu {
+                            Button {
+                                selectedSource = .project(url: url)
+                            } label: {
+                                Label("Switch to \(url.lastPathComponent)", systemImage: "arrow.right.circle")
                             }
-                            state.removeProject(url)
+                            Divider()
+                            Button(role: .destructive) {
+                                if case .project(let sel) = selectedSource, sel == url {
+                                    selectedSource = .personal
+                                }
+                                state.removeProject(url)
+                            } label: {
+                                Label("Remove Project", systemImage: "minus.circle")
+                            }
                         } label: {
-                            Label("Remove Project", systemImage: "minus.circle")
+                            Label(url.lastPathComponent, systemImage: "folder")
                         }
-                    } label: {
-                        Label(url.lastPathComponent, systemImage: "folder")
                     }
                 }
-            }
 
-            if !state.legacyCommands.isEmpty {
+                if !state.legacyCommands.isEmpty {
+                    Divider()
+                    Button {
+                        selectedSource = .legacyCommands
+                    } label: {
+                        Label("Legacy Commands", systemImage: "terminal")
+                    }
+                }
+
+                if !state.installedPlugins.isEmpty {
+                    Divider()
+                    ForEach(state.installedPlugins, id: \.id) { plugin in
+                        Button {
+                            selectedSource = .plugin(id: plugin.id)
+                        } label: {
+                            Label(plugin.name, systemImage: "puzzlepiece.extension")
+                        }
+                    }
+                }
+
+                Divider()
+
+                Button {
+                    addProject()
+                } label: {
+                    Label(localization.string("Add Project…"), systemImage: "folder.badge.plus")
+                }
+            } else {
                 Divider()
                 Button {
-                    selectedSource = .legacyCommands
+                    selectedSource = .codexSystem
                 } label: {
-                    Label("Legacy Commands", systemImage: "terminal")
+                    Label("System Skills", systemImage: "gearshape")
                 }
-            }
-
-            if !state.installedPlugins.isEmpty {
-                Divider()
-                ForEach(state.installedPlugins, id: \.id) { plugin in
-                    Button {
-                        selectedSource = .plugin(id: plugin.id)
-                    } label: {
-                        Label(plugin.name, systemImage: "puzzlepiece.extension")
-                    }
-                }
-            }
-
-            Divider()
-
-            Button {
-                addProject()
-            } label: {
-                Label(localization.string("Add Project…"), systemImage: "folder.badge.plus")
             }
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: selectedSource.icon)
                     .foregroundStyle(Color.accentColor)
                     .frame(width: 18)
-                Text(selectedSource.displayName)
+                Text(selectedSource.displayName(provider: state.selectedProvider))
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                 Image(systemName: "chevron.down")
@@ -177,6 +208,10 @@ struct SkillListView: View {
 
     // MARK: - Batch Toolbar
 
+    private var mutableSelectedSkills: [Skill] {
+        selectedSkills.filter { !$0.location.isReadOnly }
+    }
+
     private var batchToolbar: some View {
         HStack(spacing: 8) {
             Text("\(selectedIDs.count) selected")
@@ -185,7 +220,7 @@ struct SkillListView: View {
             Spacer()
             Button {
                 Task {
-                    for skill in selectedSkills where skill.isEnabled {
+                    for skill in mutableSelectedSkills where skill.isEnabled {
                         try? await state.toggleSkillEnabled(skill)
                     }
                     selectedIDs = []
@@ -196,11 +231,11 @@ struct SkillListView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
-            .disabled(selectedSkills.allSatisfy { !$0.isEnabled })
+            .disabled(mutableSelectedSkills.isEmpty || mutableSelectedSkills.allSatisfy { !$0.isEnabled })
 
             Button {
                 Task {
-                    for skill in selectedSkills where !skill.isEnabled {
+                    for skill in mutableSelectedSkills where !skill.isEnabled {
                         try? await state.toggleSkillEnabled(skill)
                     }
                     selectedIDs = []
@@ -211,7 +246,7 @@ struct SkillListView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
-            .disabled(selectedSkills.allSatisfy { $0.isEnabled })
+            .disabled(mutableSelectedSkills.isEmpty || mutableSelectedSkills.allSatisfy { $0.isEnabled })
 
             Button {
                 for skill in selectedSkills {
@@ -290,7 +325,7 @@ struct SkillListView: View {
                 EmptyStateView(
                     icon: "bookmark.slash",
                     title: String(localized: "No Skills Yet"),
-                    message: String(localized: "Skills are reusable instructions for Claude Code. Create your first skill with the + button above."),
+                    message: String(localized: "Skills are reusable instructions for coding assistants. Create your first skill with the + button above."),
                     action: { state.showCreateSheet = true },
                     actionLabel: String(localized: "Create Skill"),
                     learnMoreURL: URL(string: "https://agentskills.io")
@@ -323,6 +358,7 @@ struct SkillListView: View {
             Label(skill.isEnabled ? "Disable" : "Enable",
                   systemImage: skill.isEnabled ? "pause.circle" : "play.circle")
         }
+        .disabled(skill.location.isReadOnly)
         Divider()
         Button {
             NSPasteboard.general.clearContents()
@@ -342,7 +378,7 @@ struct SkillListView: View {
         } label: {
             Label("Delete…", systemImage: "trash")
         }
-        .disabled(skill.location.isPlugin)
+        .disabled(skill.location.isReadOnly)
     }
 
     // MARK: - Add Project
@@ -367,13 +403,20 @@ enum SkillSource: Hashable {
     case project(url: URL)
     case legacyCommands
     case plugin(id: String)
+    case codexSystem
 
-    var displayName: String {
+    func displayName(provider _: SkillProvider) -> String {
         switch self {
-        case .personal:       return String(localized: "Personal Skills")
-        case .project(let u): return u.lastPathComponent
-        case .legacyCommands: return String(localized: "Legacy Commands")
-        case .plugin(let id): return id.components(separatedBy: "@").first ?? id
+        case .personal:
+            return String(localized: "Personal Skills")
+        case .project(let u):
+            return u.lastPathComponent
+        case .legacyCommands:
+            return String(localized: "Legacy Commands")
+        case .plugin(let id):
+            return id.components(separatedBy: "@").first ?? id
+        case .codexSystem:
+            return String(localized: "System Skills")
         }
     }
 
@@ -383,6 +426,7 @@ enum SkillSource: Hashable {
         case .project:        return "folder"
         case .legacyCommands: return "terminal"
         case .plugin:         return "puzzlepiece.extension"
+        case .codexSystem:    return "gearshape"
         }
     }
 }

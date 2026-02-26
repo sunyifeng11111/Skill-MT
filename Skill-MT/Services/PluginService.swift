@@ -8,9 +8,17 @@ struct InstalledPlugin {
 
 struct PluginService {
 
-    private let pluginsJSONURL = FileSystemPaths.claudeURL
-        .appendingPathComponent("plugins")
-        .appendingPathComponent("installed_plugins.json")
+    private let settings: AppSettings
+
+    init(settings: AppSettings = .shared) {
+        self.settings = settings
+    }
+
+    private var pluginsJSONURL: URL {
+        FileSystemPaths.claudeURL(settings: settings)
+            .appendingPathComponent("plugins")
+            .appendingPathComponent("installed_plugins.json")
+    }
 
     func discoverPlugins() -> [InstalledPlugin] {
         guard let data = try? Data(contentsOf: pluginsJSONURL),

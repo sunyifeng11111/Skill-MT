@@ -14,9 +14,14 @@ struct CreateSkillView: View {
     @State private var createError: String?
 
     private var availableLocations: [SkillLocation] {
-        var locations: [SkillLocation] = [.personal]
-        locations += appState.monitoredProjectURLs.map { .project(path: $0.path) }
-        return locations
+        switch appState.selectedProvider {
+        case .claude:
+            var locations: [SkillLocation] = [.personal]
+            locations += appState.monitoredProjectURLs.map { .project(path: $0.path) }
+            return locations
+        case .codex:
+            return [.codexPersonal]
+        }
     }
 
     private var sanitizedName: String {
@@ -77,7 +82,7 @@ struct CreateSkillView: View {
                 Text("New Skill")
                     .font(.title3)
                     .fontWeight(.semibold)
-                Text("Create a local skill for Claude Code")
+                Text("Create a local skill")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -190,6 +195,10 @@ struct CreateSkillView: View {
         switch loc {
         case .personal:
             return "Personal Skills"
+        case .codexPersonal:
+            return "Personal Skills"
+        case .codexSystem:
+            return "System Skills"
         case .project(let path):
             return "Project: \(URL(fileURLWithPath: path).lastPathComponent)"
         case .legacyCommand:

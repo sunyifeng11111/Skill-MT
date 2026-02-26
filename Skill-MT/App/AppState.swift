@@ -2,12 +2,27 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
+enum AppStateError: LocalizedError {
+    case readOnlySkill
+
+    var errorDescription: String? {
+        switch self {
+        case .readOnlySkill:
+            return "This skill is read-only and cannot be modified."
+        }
+    }
+}
+
 @Observable
 final class AppState {
+
+    let settings: AppSettings
 
     // MARK: - Skill Data
 
     var personalSkills: [Skill] = []
+    var codexPersonalSkills: [Skill] = []
+    var codexSystemSkills: [Skill] = []
     var legacyCommands: [Skill] = []
     /// project URL path → [Skill]
     var projectSkills: [String: [Skill]] = [:]
@@ -22,6 +37,12 @@ final class AppState {
 
     var selectedSkill: Skill?
     var searchText: String = ""
+    var settingsRevision: Int = 0
+    var selectedProvider: SkillProvider = .claude {
+        didSet {
+            UserDefaults.standard.set(selectedProvider.rawValue, forKey: "selectedProvider")
+        }
+    }
 
     // MARK: - CRUD Sheet State
 
@@ -39,9 +60,14 @@ final class AppState {
     // MARK: - Computed
 
     var allSkills: [Skill] {
-        personalSkills + legacyCommands
-            + projectSkills.values.flatMap { $0 }
-            + pluginSkills.values.flatMap { $0 }
+        switch selectedProvider {
+        case .claude:
+            return personalSkills + legacyCommands
+                + projectSkills.values.flatMap { $0 }
+                + pluginSkills.values.flatMap { $0 }
+        case .codex:
+            return codexPersonalSkills + codexSystemSkills
+        }
     }
 
     var filteredPersonalSkills: [Skill] {
@@ -50,6 +76,14 @@ final class AppState {
 
     var filteredLegacyCommands: [Skill] {
         filter(legacyCommands)
+    }
+
+    var filteredCodexPersonalSkills: [Skill] {
+        filter(codexPersonalSkills)
+    }
+
+    var filteredCodexSystemSkills: [Skill] {
+        filter(codexSystemSkills)
     }
 
     func filteredProjectSkills(for path: String) -> [Skill] {
@@ -76,11 +110,19 @@ final class AppState {
         let personalTask = Task.detached(priority: .userInitiated) { () -> [Skill] in
             (try? FileSystemService().discoverPersonalSkills()) ?? []
         }
+        let codexPersonalTask = Task.detached(priority: .userInitiated) { () -> [Skill] in
+            (try? FileSystemService().discoverCodexPersonalSkills()) ?? []
+        }
+        let codexSystemTask = Task.detached(priority: .userInitiated) { () -> [Skill] in
+            (try? FileSystemService().discoverCodexSystemSkills()) ?? []
+        }
         let legacyTask = Task.detached(priority: .userInitiated) { () -> [Skill] in
             (try? FileSystemService().discoverLegacyCommands()) ?? []
         }
 
         personalSkills = await personalTask.value
+        codexPersonalSkills = await codexPersonalTask.value
+        codexSystemSkills = await codexSystemTask.value
         legacyCommands = await legacyTask.value
 
         for url in monitoredProjectURLs {
@@ -130,6 +172,7 @@ final class AppState {
         newFrontmatter: SkillFrontmatter,
         newMarkdownContent: String
     ) async throws {
+        guard !skill.location.isReadOnly else { throw AppStateError.readOnlySkill }
         let dirPath = skill.directoryURL.path
         try await Task.detached(priority: .userInitiated) {
             try SkillCRUDService().updateSkill(
@@ -144,6 +187,7 @@ final class AppState {
 
     @MainActor
     func deleteSkill(_ skill: Skill) async throws {
+        guard !skill.location.isReadOnly else { throw AppStateError.readOnlySkill }
         // Clear selection before deleting to avoid showing a stale detail view
         if selectedSkill?.directoryURL.path == skill.directoryURL.path {
             selectedSkill = nil
@@ -244,6 +288,7 @@ final class AppState {
     /// Toggle a skill's enabled state (renames SKILL.md ↔ SKILL.md.disabled).
     @MainActor
     func toggleSkillEnabled(_ skill: Skill) async throws {
+        guard !skill.location.isReadOnly else { throw AppStateError.readOnlySkill }
         let dirPath = skill.directoryURL.path
         let newEnabled = !skill.isEnabled
         try await Task.detached(priority: .userInitiated) {
@@ -273,11 +318,20 @@ final class AppState {
         persistProjectPaths()
     }
 
+    @MainActor
+    func applySettingsAndReload() async {
+        settingsRevision += 1
+        await loadAllSkills()
+    }
+
     // MARK: - Persistence (project paths via UserDefaults)
 
-    init() {
+    init(settings: AppSettings = .shared) {
+        self.settings = settings
         let saved = UserDefaults.standard.stringArray(forKey: "monitoredProjectPaths") ?? []
         monitoredProjectURLs = saved.map { URL(fileURLWithPath: $0) }
+        let providerRaw = UserDefaults.standard.string(forKey: "selectedProvider") ?? ""
+        selectedProvider = SkillProvider(rawValue: providerRaw) ?? .claude
     }
 
     private func persistProjectPaths() {

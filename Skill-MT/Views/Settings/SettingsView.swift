@@ -1,88 +1,258 @@
 import SwiftUI
 import AppKit
 
+enum SettingsSection: String, CaseIterable, Identifiable {
+    case general
+    case paths
+
+    var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .general: return "gearshape"
+        case .paths: return "folder"
+        }
+    }
+
+    var titleKey: String {
+        switch self {
+        case .general: return "General"
+        case .paths: return "Paths"
+        }
+    }
+}
+
 struct SettingsView: View {
+    @Bindable var appState: AppState
     @Environment(\.dismiss) private var dismiss
     @Environment(\.localization) private var localization
     @State private var appearance: AppAppearance = AppAppearance.load()
+    @State private var selectedSection: SettingsSection? = .general
+    @State private var claudeHomeDraft: String = ""
+    @State private var codexHomeDraft: String = ""
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(localization.string("Settings"))
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                    Text(localization.string("Skill-MT preferences"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
+        HStack(spacing: 0) {
+            List(SettingsSection.allCases, selection: $selectedSection) { section in
+                Label(localization.string(section.titleKey), systemImage: section.icon)
+                    .tag(section)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .listStyle(.sidebar)
+            .frame(width: 160)
 
             Divider()
 
-            VStack(alignment: .leading, spacing: 16) {
-                // Language
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(localization.string("Language"))
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                    HStack(spacing: 12) {
-                        ForEach(AppLanguage.allCases) { lang in
-                            languageButton(lang)
-                        }
-                    }
-                }
-
-                Divider()
-
-                // Appearance
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(localization.string("Appearance"))
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                    HStack(spacing: 12) {
-                        ForEach(AppAppearance.allCases) { mode in
-                            appearanceButton(mode)
-                        }
-                    }
-                }
-
-                Divider()
-
-                // Version
+            VStack(spacing: 0) {
                 HStack {
-                    Text(localization.string("Version"))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(localization.string("Settings"))
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                        Text(localization.string("Skill-MT preferences"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     Spacer()
-                    Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+
+                Divider()
+
+                Group {
+                    switch selectedSection ?? .general {
+                    case .general:
+                        generalSection
+                    case .paths:
+                        pathsSection
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 20)
+
+                Spacer()
+
+                Divider()
+
+                HStack {
+                    Spacer()
+                    Button(localization.string("Done")) { dismiss() }
+                        .keyboardShortcut(.return, modifiers: .command)
+                        .buttonStyle(.borderedProminent)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+            }
+        }
+        .frame(width: 700, height: 460)
+        .onAppear {
+            claudeHomeDraft = appState.settings.claudeHomePath
+            codexHomeDraft = appState.settings.codexHomePath
+        }
+    }
+
+    private var generalSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(localization.string("Language"))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 12) {
+                    ForEach(AppLanguage.allCases) { lang in
+                        languageButton(lang)
+                    }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 20)
 
-            Spacer()
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(localization.string("Appearance"))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 12) {
+                    ForEach(AppAppearance.allCases) { mode in
+                        appearanceButton(mode)
+                    }
+                }
+            }
 
             Divider()
 
             HStack {
+                Text(localization.string("Version"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
                 Spacer()
-                Button(localization.string("Done")) { dismiss() }
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .buttonStyle(.borderedProminent)
+                Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
         }
-        .frame(width: 420, height: 380)
+    }
+
+    private var pathsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(localization.string("Directories"))
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundStyle(.secondary)
+
+            pathEditorRow(
+                title: localization.string("Claude Home Directory"),
+                text: $claudeHomeDraft,
+                onChoose: { chooseDirectory(for: .claude) },
+                onReset: { resetPath(for: .claude) },
+                onSave: { savePath(for: .claude) }
+            )
+
+            pathEditorRow(
+                title: localization.string("Codex Home Directory"),
+                text: $codexHomeDraft,
+                onChoose: { chooseDirectory(for: .codex) },
+                onReset: { resetPath(for: .codex) },
+                onSave: { savePath(for: .codex) }
+            )
+
+            Text(localization.string("Project skills path remains <project>/.claude/skills and is not overridden by this setting."))
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+    }
+
+    private func pathEditorRow(
+        title: String,
+        text: Binding<String>,
+        onChoose: @escaping () -> Void,
+        onReset: @escaping () -> Void,
+        onSave: @escaping () -> Void
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+
+            HStack(spacing: 8) {
+                TextField("", text: text)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit { onSave() }
+
+                Button(localization.string("Choose…"), action: onChoose)
+                Button(localization.string("Reset"), action: onReset)
+                    .foregroundStyle(.secondary)
+            }
+
+            if !directoryExists(path: text.wrappedValue) {
+                Text(localization.string("Path does not exist yet. Skills list will be empty until created."))
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+        .padding(12)
+        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private enum PathTarget {
+        case claude
+        case codex
+    }
+
+    private func chooseDirectory(for target: PathTarget) {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = localization.string("Choose…")
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        switch target {
+        case .claude:
+            claudeHomeDraft = url.path
+        case .codex:
+            codexHomeDraft = url.path
+        }
+
+        savePath(for: target)
+    }
+
+    private func resetPath(for target: PathTarget) {
+        switch target {
+        case .claude:
+            appState.settings.resetClaudeHome()
+            claudeHomeDraft = appState.settings.claudeHomePath
+        case .codex:
+            appState.settings.resetCodexHome()
+            codexHomeDraft = appState.settings.codexHomePath
+        }
+
+        Task { await appState.applySettingsAndReload() }
+    }
+
+    private func savePath(for target: PathTarget) {
+        switch target {
+        case .claude:
+            appState.settings.saveClaudeHome(claudeHomeDraft)
+            claudeHomeDraft = appState.settings.claudeHomePath
+        case .codex:
+            appState.settings.saveCodexHome(codexHomeDraft)
+            codexHomeDraft = appState.settings.codexHomePath
+        }
+
+        Task { await appState.applySettingsAndReload() }
+    }
+
+    private func directoryExists(path: String) -> Bool {
+        let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+
+        var isDirectory: ObjCBool = false
+        return FileManager.default.fileExists(
+            atPath: appState.settings.expandedPath(trimmed).path,
+            isDirectory: &isDirectory
+        ) && isDirectory.boolValue
     }
 
     private func languageButton(_ lang: AppLanguage) -> some View {
@@ -97,10 +267,14 @@ struct SettingsView: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background(isSelected ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05),
-                    in: RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8)
-            .strokeBorder(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5))
+        .background(
+            isSelected ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05),
+            in: RoundedRectangle(cornerRadius: 8)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+        )
         .foregroundStyle(isSelected ? Color.accentColor : .primary)
     }
 
@@ -121,10 +295,14 @@ struct SettingsView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background(isSelected ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05),
-                    in: RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8)
-            .strokeBorder(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5))
+        .background(
+            isSelected ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05),
+            in: RoundedRectangle(cornerRadius: 8)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+        )
         .foregroundStyle(isSelected ? Color.accentColor : .primary)
     }
 }

@@ -6,7 +6,7 @@ struct ImportSkillView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var skillName: String
-    @State private var selectedLocation: SkillLocation = .personal
+    @State private var selectedLocation: SkillLocation
     @State private var isImporting: Bool = false
     @State private var importError: String?
 
@@ -14,12 +14,20 @@ struct ImportSkillView: View {
         self.package = package
         self.appState = appState
         _skillName = State(initialValue: package.name)
+        _selectedLocation = State(
+            initialValue: appState.selectedProvider == .codex ? .codexPersonal : .personal
+        )
     }
 
     private var availableLocations: [SkillLocation] {
-        var locations: [SkillLocation] = [.personal]
-        locations += appState.monitoredProjectURLs.map { .project(path: $0.path) }
-        return locations
+        switch appState.selectedProvider {
+        case .claude:
+            var locations: [SkillLocation] = [.personal]
+            locations += appState.monitoredProjectURLs.map { .project(path: $0.path) }
+            return locations
+        case .codex:
+            return [.codexPersonal]
+        }
     }
 
     private var nameError: String? {

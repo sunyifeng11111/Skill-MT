@@ -15,12 +15,22 @@
 "Display Language" = "显示语言";
 "System Default" = "跟随系统";
 "Restart may be required for full effect." = "完全生效可能需要重启应用。";
+"General" = "通用";
+"Paths" = "目录";
+"Directories" = "目录设置";
+"Claude Home Directory" = "Claude 根目录";
+"Codex Home Directory" = "Codex 根目录";
+"Choose…" = "选择…";
+"Reset" = "恢复默认";
+"Path does not exist yet. Skills list will be empty until created." = "该路径目前不存在；创建目录前技能列表会为空。";
+"Project skills path remains <project>/.claude/skills and is not overridden by this setting." = "项目技能路径始终为 <project>/.claude/skills，不受此设置影响。";
 
 /* Skill List */
 "Personal Skills" = "个人技能";
 "Legacy Commands" = "旧版命令";
 "No Skills Yet" = "暂无技能";
 "Skills are reusable instructions for Claude Code. Create your first skill with the + button above." = "技能是 Claude Code 的可复用指令。点击上方 + 按钮创建第一个技能。";
+"Skills are reusable instructions for coding assistants. Create your first skill with the + button above." = "技能是编码助手的可复用指令。点击上方 + 按钮创建第一个技能。";
 "Create Skill" = "创建技能";
 "Learn More" = "了解更多";
 "No Results" = "无结果";
@@ -29,6 +39,7 @@
 "Add Project…" = "添加项目…";
 "New Skill" = "新建技能";
 "Search skills…" = "搜索技能…";
+"System Skills" = "系统技能";
 
 /* Skill Row / Context Menu */
 "Show in Finder" = "在 Finder 中显示";
@@ -41,6 +52,7 @@
 /* Skill Detail */
 "Select a Skill" = "选择一个技能";
 "Skills are reusable instructions that Claude Code can invoke. Select one from the list to view its details." = "技能是 Claude Code 可调用的可复用指令。从列表中选择一个以查看详情。";
+"Skills are reusable instructions for coding assistants. Select one from the list to view its details." = "技能是编码助手的可复用指令。从列表中选择一个以查看详情。";
 "Reveal in Finder" = "在 Finder 中显示";
 "Disabled" = "已禁用";
 "Plugin" = "插件";
@@ -50,12 +62,15 @@
 "Plugin skill — read only" = "插件技能 — 只读";
 "Fork to Personal Skills to edit or customize." = "Fork 到个人技能以编辑或自定义。";
 "Fork to Personal" = "Fork 到个人技能";
+"System skill — read only" = "系统技能 — 只读";
+"Built-in Codex skills cannot be edited or deleted." = "Codex 内置系统技能不可编辑或删除。";
 
 /* Disable confirmation */
 "Claude Code will no longer be able to find this skill. You can re-enable it at any time." = "Claude Code 将无法找到此技能。你可以随时重新启用它。";
 
 /* Create Skill */
 "Create a local skill for Claude Code" = "为 Claude Code 创建本地技能";
+"Create a local skill" = "创建本地技能";
 "Identity" = "基本信息";
 "Skill name" = "技能名称";
 "e.g. code-reviewer" = "例如：code-reviewer";
@@ -84,6 +99,7 @@
 "Hidden" = "已隐藏";
 "Fork" = "Fork";
 "Personal" = "个人";
+"System Skill" = "系统";
 "Legacy Command" = "旧版命令";
 
 /* Appearance */
