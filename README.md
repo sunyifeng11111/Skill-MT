@@ -15,7 +15,7 @@
 ## 下载
 
 [**下载最新版本 →**](https://github.com/sunyifeng11111/Skill-MT/releases/latest)
-当前稳定版：`v1.2.3`（2026-02-27）
+当前稳定版：`v1.2.4`（2026-02-27）
 
 ## 功能
 
