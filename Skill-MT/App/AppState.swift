@@ -384,7 +384,10 @@ final class AppState {
             updateStatusMessage = String(localized: "You're on the latest version.")
         case .updateAvailable(let release):
             latestReleaseInfo = release
-            updateStatusMessage = String(localized: "Update available: \(release.version)")
+            updateStatusMessage = String(
+                format: String(localized: "Update available: %@"),
+                release.version
+            )
             showUpdatePrompt = true
         case .noStableRelease:
             updateStatusMessage = String(localized: "No stable release found.")

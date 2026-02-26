@@ -33,6 +33,7 @@
 "View Release Notes" = "View Release Notes";
 "Later" = "Later";
 "You're on the latest version." = "You're on the latest version.";
+"Update available: %@" = "Update available: %@";
 "No stable release found." = "No stable release found.";
 "Update package downloaded and opened." = "Update package downloaded and opened.";
 "Update package opened. Skill-MT will now quit so you can finish installation." = "Update package opened. Skill-MT will now quit so you can finish installation.";
