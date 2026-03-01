@@ -5,26 +5,65 @@ struct SkillDetailView: View {
     @Bindable var appState: AppState
     @Environment(\.localization) private var localization
     @State private var showOpenSupportingFileAlert: Bool = false
+    @State private var showDiscardAlert: Bool = false
     @State private var pendingSupportingFileURL: URL?
     @State private var pendingSupportingFileRelativePath: String = ""
     @State private var expandedSupportingDirectories: Set<String> = []
+    @State private var isEditingInline: Bool = false
+    @State private var description: String = ""
+    @State private var argumentHint: String = ""
+    @State private var userInvocable: Bool = true
+    @State private var disableModelInvocation: Bool = false
+    @State private var allowedTools: String = ""
+    @State private var model: String = ""
+    @State private var context: String = ""
+    @State private var agent: String = ""
+    @State private var markdownContent: String = ""
+    @State private var initialDescription: String = ""
+    @State private var initialArgumentHint: String = ""
+    @State private var initialUserInvocable: Bool = true
+    @State private var initialDisableModelInvocation: Bool = false
+    @State private var initialAllowedTools: String = ""
+    @State private var initialModel: String = ""
+    @State private var initialContext: String = ""
+    @State private var initialAgent: String = ""
+    @State private var initialMarkdownContent: String = ""
+    @State private var isSaving: Bool = false
+    @State private var saveError: String?
+    @State private var saveStatusMessage: String?
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                if isPluginSkill {
-                    pluginReadOnlyBanner
-                } else if isCodexSystemSkill {
-                    codexSystemReadOnlyBanner
+        Group {
+            if isEditingInline {
+                VStack(alignment: .leading, spacing: 12) {
+                    if isPluginSkill {
+                        pluginReadOnlyBanner
+                    } else if isCodexSystemSkill {
+                        codexSystemReadOnlyBanner
+                    }
+                    headerSection
+                    inlineEditorSection
+                        .frame(maxHeight: .infinity, alignment: .top)
                 }
-                headerSection
-                frontmatterSection
-                contentSection
-                if !skill.supportingFiles.isEmpty {
-                    supportingFilesSection
+                .padding(16)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        if isPluginSkill {
+                            pluginReadOnlyBanner
+                        } else if isCodexSystemSkill {
+                            codexSystemReadOnlyBanner
+                        }
+                        headerSection
+                        frontmatterSection
+                        contentSection
+                        if !skill.supportingFiles.isEmpty {
+                            supportingFilesSection
+                        }
+                    }
+                    .padding(16)
                 }
             }
-            .padding(16)
         }
         .background {
             // Subtle accent gradient gives glass cards an interesting surface to
@@ -44,23 +83,20 @@ struct SkillDetailView: View {
         .toolbar {
             detailToolbar
         }
-        .sheet(item: $appState.skillToEdit) { skillToEdit in
-            EditSkillView(skill: skillToEdit, appState: appState)
-        }
-        .alert("Open file?", isPresented: $showOpenSupportingFileAlert) {
-            Button("Open") {
+        .alert(localization.string("Open file?"), isPresented: $showOpenSupportingFileAlert) {
+            Button(localization.string("Open")) {
                 if let url = pendingSupportingFileURL {
                     NSWorkspace.shared.open(url)
                 }
                 clearPendingSupportingFile()
             }
-            Button("Reveal in Finder") {
+            Button(localization.string("Reveal in Finder")) {
                 if let url = pendingSupportingFileURL {
                     NSWorkspace.shared.activateFileViewerSelecting([url])
                 }
                 clearPendingSupportingFile()
             }
-            Button("Cancel", role: .cancel) {
+            Button(localization.string("Cancel"), role: .cancel) {
                 clearPendingSupportingFile()
             }
         } message: {
@@ -71,6 +107,25 @@ struct SkillDetailView: View {
                 )
             )
         }
+        .alert(localization.string("Discard unsaved changes?"), isPresented: $showDiscardAlert) {
+            Button(localization.string("Discard Changes"), role: .destructive) {
+                exitInlineEditing(discardChanges: true)
+            }
+            Button(localization.string("Continue Editing"), role: .cancel) {}
+        } message: {
+            Text(localization.string("You have unsaved changes. Discard them and leave edit mode?"))
+        }
+        .onAppear {
+            resetEditorState(from: skill)
+        }
+        .onChange(of: skill.directoryURL.path) { _, _ in
+            resetEditorState(from: skill)
+        }
+        .onChange(of: skill.lastModified) { _, _ in
+            if !isEditingInline {
+                resetEditorState(from: skill)
+            }
+        }
     }
 
     // MARK: - Plugin Banner
@@ -80,10 +135,10 @@ struct SkillDetailView: View {
             Image(systemName: "puzzlepiece.extension")
                 .foregroundStyle(.purple)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Plugin skill — read only")
+                Text(localization.string("Plugin skill — read only"))
                     .font(.subheadline)
                     .fontWeight(.medium)
-                Text("Fork to Personal Skills to edit or customize.")
+                Text(localization.string("Fork to Personal Skills to edit or customize."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -93,7 +148,7 @@ struct SkillDetailView: View {
                     try? await appState.forkSkillToPersonal(skill)
                 }
             } label: {
-                Label("Fork to Personal", systemImage: "arrow.turn.down.left")
+                Label(localization.string("Fork to Personal"), systemImage: "arrow.turn.down.left")
                     .font(.caption)
             }
             .buttonStyle(.bordered)
@@ -112,10 +167,10 @@ struct SkillDetailView: View {
             Image(systemName: "gearshape")
                 .foregroundStyle(.orange)
             VStack(alignment: .leading, spacing: 2) {
-                Text("System skill — read only")
+                Text(localization.string("System skill — read only"))
                     .font(.subheadline)
                     .fontWeight(.medium)
-                Text("Built-in Codex skills cannot be edited or deleted.")
+                Text(localization.string("Built-in Codex skills cannot be edited or deleted."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -155,23 +210,23 @@ struct SkillDetailView: View {
             HStack(spacing: 6) {
                 locationBadge
                 if isPluginSkill {
-                    badge(String(localized: "Plugin"), color: .purple, icon: "puzzlepiece.extension")
+                    badge(localization.string("Plugin"), color: .purple, icon: "puzzlepiece.extension")
                 }
                 if !skill.isEnabled {
-                    badge(String(localized: "Disabled"), color: .red, icon: "pause.circle.fill")
+                    badge(localization.string("Disabled"), color: .red, icon: "pause.circle.fill")
                 }
                 if skill.frontmatter.disableModelInvocation {
-                    badge(String(localized: "Auto-off"), color: .orange, icon: "bolt.slash")
+                    badge(localization.string("Auto-off"), color: .orange, icon: "bolt.slash")
                 }
                 if !skill.frontmatter.userInvocable {
-                    badge(String(localized: "Hidden"), color: .secondary, icon: "eye.slash")
+                    badge(localization.string("Hidden"), color: .secondary, icon: "eye.slash")
                 }
                 if skill.frontmatter.context == "fork" {
-                    badge(String(localized: "Fork"), color: .purple, icon: "arrow.triangle.branch")
+                    badge(localization.string("Fork"), color: .purple, icon: "arrow.triangle.branch")
                 }
             }
 
-            Text("Modified \(skill.lastModified.formatted(.relative(presentation: .named)))")
+            Text("\(localization.string("Modified")) \(skill.lastModified.formatted(.relative(presentation: .named)))")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
@@ -196,11 +251,63 @@ struct SkillDetailView: View {
             .cardPanel()
     }
 
+    private var inlineEditorSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let saveStatusMessage {
+                Text(saveStatusMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            if let saveError {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red)
+                    Text(saveError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+            }
+
+            HSplitView {
+                ScrollView {
+                    SkillEditorFieldsView(
+                        hooksRaw: skill.frontmatter.hooksRaw,
+                        description: $description,
+                        argumentHint: $argumentHint,
+                        userInvocable: $userInvocable,
+                        disableModelInvocation: $disableModelInvocation,
+                        allowedTools: $allowedTools,
+                        model: $model,
+                        context: $context,
+                        agent: $agent
+                    )
+                    .padding(.vertical, 8)
+                }
+                .frame(minWidth: 380)
+                .layoutPriority(1)
+
+                SkillEditorContentView(markdownContent: $markdownContent)
+                    .padding(.vertical, 8)
+                    .frame(minWidth: 520, maxWidth: .infinity, minHeight: 520, alignment: .topLeading)
+                    .layoutPriority(2)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .cardPanel()
+    }
+
     // MARK: - Supporting Files
 
     private var supportingFilesSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Supporting Files")
+            Text(localization.string("Supporting Files"))
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
@@ -388,13 +495,13 @@ struct SkillDetailView: View {
     private var locationBadge: some View {
         switch skill.location {
         case .personal:
-            return badge(String(localized: "Personal"), color: .accentColor, icon: "person.crop.circle")
+            return badge(localization.string("Personal"), color: .accentColor, icon: "person.crop.circle")
         case .codexPersonal:
-            return badge(String(localized: "Personal"), color: .accentColor, icon: "person.crop.circle")
+            return badge(localization.string("Personal"), color: .accentColor, icon: "person.crop.circle")
         case .codexSystem:
-            return badge(String(localized: "System Skill"), color: .orange, icon: "gearshape")
+            return badge(localization.string("System Skill"), color: .orange, icon: "gearshape")
         case .legacyCommand:
-            return badge(String(localized: "Legacy Command"), color: .orange, icon: "terminal")
+            return badge(localization.string("Legacy Command"), color: .orange, icon: "terminal")
         case .project(let path):
             return badge(URL(fileURLWithPath: path).lastPathComponent, color: .accentColor, icon: "folder")
         case .codexProject(let path):
@@ -436,13 +543,13 @@ struct SkillDetailView: View {
             } label: {
                 Image(systemName: skill.isEnabled ? "pause.circle" : "play.circle")
             }
-            .accessibilityLabel(skill.isEnabled ? "Disable" : "Enable")
-            .help(skill.isEnabled ? "Disable this skill" : "Enable this skill")
+            .accessibilityLabel(skill.isEnabled ? localization.string("Disable") : localization.string("Enable"))
+            .help(skill.isEnabled ? localization.string("Disable this skill") : localization.string("Enable this skill"))
             .disabled(skill.location.isReadOnly)
 
             Menu {
                 if moveTargets.isEmpty {
-                    Text("No available move target")
+                    Text(localization.string("No available move target"))
                 } else {
                     ForEach(moveTargets, id: \.self) { target in
                         Button {
@@ -453,38 +560,72 @@ struct SkillDetailView: View {
                     }
                 }
             } label: {
-                Label("Move To", systemImage: "arrow.left.arrow.right.circle")
+                Label(localization.string("Move To"), systemImage: "arrow.left.arrow.right.circle")
             }
             .disabled(skill.location.isReadOnly || moveTargets.isEmpty)
-            .help("Move this skill to another location")
+            .help(localization.string("Move this skill to another location"))
 
             Button {
                 NSWorkspace.shared.activateFileViewerSelecting([skill.directoryURL])
             } label: {
-                Label("Show in Finder", systemImage: "folder")
+                Label(localization.string("Show in Finder"), systemImage: "folder")
             }
-            .help("Reveal in Finder")
+            .help(localization.string("Reveal in Finder"))
 
             Button {
                 appState.exportSkill(skill)
             } label: {
-                Label("Export", systemImage: "square.and.arrow.up")
+                Label(localization.string("Export"), systemImage: "square.and.arrow.up")
             }
             .disabled(skill.isLegacyCommand || isPluginSkill)
-            .help(isPluginSkill ? "Plugin skills cannot be exported" : skill.isLegacyCommand ? "Legacy commands cannot be exported" : "Export this skill as a ZIP archive")
+            .help(
+                isPluginSkill
+                    ? localization.string("Plugin skills cannot be exported")
+                    : skill.isLegacyCommand
+                        ? localization.string("Legacy commands cannot be exported")
+                        : localization.string("Export this skill as a ZIP archive")
+            )
 
             Button {
-                appState.skillToEdit = skill
+                if isEditingInline {
+                    attemptExitInlineEditing()
+                } else {
+                    startInlineEditing()
+                }
             } label: {
-                Label("Edit", systemImage: "pencil")
+                Label(
+                    isEditingInline ? localization.string("Done") : localization.string("Edit"),
+                    systemImage: isEditingInline ? "checkmark.circle" : "pencil"
+                )
             }
             .disabled(skill.isLegacyCommand || skill.location.isReadOnly)
             .help(
-                isPluginSkill ? "Plugin skills are read-only"
-                    : isCodexSystemSkill ? "System skills are read-only"
-                    : skill.isLegacyCommand ? "Legacy commands cannot be edited here"
-                    : "Edit this skill"
+                isPluginSkill
+                    ? localization.string("Plugin skills are read-only")
+                    : isCodexSystemSkill
+                        ? localization.string("System skills are read-only")
+                        : skill.isLegacyCommand
+                            ? localization.string("Legacy commands cannot be edited here")
+                            : isEditingInline
+                                ? localization.string("Leave edit mode")
+                                : localization.string("Edit this skill")
             )
+
+            if isEditingInline {
+                Button {
+                    Task { await saveInlineChanges() }
+                } label: {
+                    if isSaving {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Text(localization.string("Save"))
+                    }
+                }
+                .keyboardShortcut("s", modifiers: .command)
+                .disabled(!hasChanges || isSaving)
+                .help(localization.string("Save changes"))
+            }
         }
     }
 
@@ -500,6 +641,110 @@ struct SkillDetailView: View {
         default:
             return location.displayName
         }
+    }
+
+    private var hasChanges: Bool {
+        description != initialDescription ||
+        argumentHint != initialArgumentHint ||
+        userInvocable != initialUserInvocable ||
+        disableModelInvocation != initialDisableModelInvocation ||
+        allowedTools != initialAllowedTools ||
+        model != initialModel ||
+        context != initialContext ||
+        agent != initialAgent ||
+        markdownContent != initialMarkdownContent
+    }
+
+    private func resetEditorState(from skill: Skill) {
+        let frontmatter = skill.frontmatter
+        description = frontmatter.description ?? ""
+        argumentHint = frontmatter.argumentHint ?? ""
+        userInvocable = frontmatter.userInvocable
+        disableModelInvocation = frontmatter.disableModelInvocation
+        allowedTools = frontmatter.allowedTools ?? ""
+        model = frontmatter.model ?? ""
+        context = frontmatter.context ?? ""
+        agent = frontmatter.agent ?? ""
+        markdownContent = skill.markdownContent
+
+        initialDescription = description
+        initialArgumentHint = argumentHint
+        initialUserInvocable = userInvocable
+        initialDisableModelInvocation = disableModelInvocation
+        initialAllowedTools = allowedTools
+        initialModel = model
+        initialContext = context
+        initialAgent = agent
+        initialMarkdownContent = markdownContent
+
+        saveStatusMessage = nil
+        saveError = nil
+    }
+
+    private func startInlineEditing() {
+        resetEditorState(from: skill)
+        isEditingInline = true
+    }
+
+    private func attemptExitInlineEditing() {
+        if hasChanges {
+            showDiscardAlert = true
+        } else {
+            exitInlineEditing(discardChanges: false)
+        }
+    }
+
+    private func exitInlineEditing(discardChanges: Bool) {
+        if discardChanges {
+            resetEditorState(from: skill)
+        }
+        isEditingInline = false
+        saveStatusMessage = nil
+        saveError = nil
+    }
+
+    @MainActor
+    private func saveInlineChanges() async {
+        guard hasChanges else { return }
+        isSaving = true
+        saveError = nil
+        saveStatusMessage = localization.string("Saving...")
+
+        let newFrontmatter = SkillFrontmatter(
+            name: skill.frontmatter.name,
+            description: description.isEmpty ? nil : description,
+            argumentHint: argumentHint.isEmpty ? nil : argumentHint,
+            disableModelInvocation: disableModelInvocation,
+            userInvocable: userInvocable,
+            allowedTools: allowedTools.isEmpty ? nil : allowedTools,
+            model: model.isEmpty ? nil : model,
+            context: context.isEmpty ? nil : context,
+            agent: agent.isEmpty ? nil : agent,
+            hooksRaw: skill.frontmatter.hooksRaw
+        )
+
+        do {
+            try await appState.updateSkill(
+                skill,
+                newFrontmatter: newFrontmatter,
+                newMarkdownContent: markdownContent
+            )
+            initialDescription = description
+            initialArgumentHint = argumentHint
+            initialUserInvocable = userInvocable
+            initialDisableModelInvocation = disableModelInvocation
+            initialAllowedTools = allowedTools
+            initialModel = model
+            initialContext = context
+            initialAgent = agent
+            initialMarkdownContent = markdownContent
+            saveStatusMessage = localization.string("Saved")
+        } catch {
+            saveError = error.localizedDescription
+            saveStatusMessage = nil
+        }
+
+        isSaving = false
     }
 }
 

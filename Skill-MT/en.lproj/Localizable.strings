@@ -66,6 +66,20 @@
 "Delete…" = "Delete…";
 "Disable" = "Disable";
 "Enable" = "Enable";
+"Disable this skill" = "Disable this skill";
+"Enable this skill" = "Enable this skill";
+"Move this skill to another location" = "Move this skill to another location";
+"Plugin skills cannot be exported" = "Plugin skills cannot be exported";
+"Legacy commands cannot be exported" = "Legacy commands cannot be exported";
+"Export this skill as a ZIP archive" = "Export this skill as a ZIP archive";
+"Plugin skills are read-only" = "Plugin skills are read-only";
+"System skills are read-only" = "System skills are read-only";
+"Legacy commands cannot be edited here" = "Legacy commands cannot be edited here";
+"Leave edit mode" = "Leave edit mode";
+"Edit this skill" = "Edit this skill";
+"Save changes" = "Save changes";
+"Saving..." = "Saving...";
+"Saved" = "Saved";
 
 /* Skill Detail */
 "Select a Skill" = "Select a Skill";
@@ -87,6 +101,10 @@
 "Open file?" = "Open file?";
 "Do you want to open \"%@\"?" = "Do you want to open \"%@\"?";
 "Open" = "Open";
+"Discard unsaved changes?" = "Discard unsaved changes?";
+"Discard Changes" = "Discard Changes";
+"Continue Editing" = "Continue Editing";
+"You have unsaved changes. Discard them and leave edit mode?" = "You have unsaved changes. Discard them and leave edit mode?";
 
 /* Create Skill */
 "New Skill" = "New Skill";
@@ -105,10 +123,18 @@
 "Initial Content" = "Initial Content";
 "Output path" = "Output path";
 "Personal Skills" = "Global Skills";
+"Will be saved as: %@" = "Will be saved as: %@";
+"Project: %@" = "Project: %@";
 
 /* Edit Skill */
 "Edit Skill" = "Edit Skill";
 "Frontmatter" = "Frontmatter";
+"Argument hint (optional)" = "Argument hint (optional)";
+"e.g. Read, Write, Bash" = "e.g. Read, Write, Bash";
+"Model override (optional)" = "Model override (optional)";
+"Agent name (optional)" = "Agent name (optional)";
+"e.g. fork" = "e.g. fork";
+"Edit hooks directly in SKILL.md" = "Edit hooks directly in SKILL.md";
 
 /* Import */
 "Import Skill…" = "Import Skill…";

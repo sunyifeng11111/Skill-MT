@@ -68,6 +68,20 @@
 "Delete…" = "删除…";
 "Disable" = "禁用";
 "Enable" = "启用";
+"Disable this skill" = "禁用此技能";
+"Enable this skill" = "启用此技能";
+"Move this skill to another location" = "将此技能移动到其他位置";
+"Plugin skills cannot be exported" = "插件技能不可导出";
+"Legacy commands cannot be exported" = "旧版命令不可导出";
+"Export this skill as a ZIP archive" = "将该技能导出为 ZIP 压缩包";
+"Plugin skills are read-only" = "插件技能为只读";
+"System skills are read-only" = "系统技能为只读";
+"Legacy commands cannot be edited here" = "旧版命令无法在此编辑";
+"Leave edit mode" = "退出编辑模式";
+"Edit this skill" = "编辑此技能";
+"Save changes" = "保存更改";
+"Saving..." = "保存中...";
+"Saved" = "已保存";
 
 /* Skill Detail */
 "Select a Skill" = "选择一个技能";
@@ -87,6 +101,10 @@
 "Open file?" = "打开文件？";
 "Do you want to open \"%@\"?" = "要打开“%@”吗？";
 "Open" = "打开";
+"Discard unsaved changes?" = "放弃未保存的更改？";
+"Discard Changes" = "放弃更改";
+"Continue Editing" = "继续编辑";
+"You have unsaved changes. Discard them and leave edit mode?" = "你有未保存的更改。要放弃并退出编辑模式吗？";
 
 /* Disable confirmation */
 "Claude Code will no longer be able to find this skill. You can re-enable it at any time." = "Claude Code 将无法找到此技能。你可以随时重新启用它。";
@@ -105,10 +123,18 @@
 "Save to" = "保存到";
 "Initial Content" = "初始内容";
 "Output path" = "输出路径";
+"Will be saved as: %@" = "将保存为：%@";
+"Project: %@" = "项目：%@";
 
 /* Edit Skill */
 "Edit Skill" = "编辑技能";
 "Frontmatter" = "元数据";
+"Argument hint (optional)" = "参数提示（可选）";
+"e.g. Read, Write, Bash" = "例如：Read, Write, Bash";
+"Model override (optional)" = "模型覆盖（可选）";
+"Agent name (optional)" = "Agent 名称（可选）";
+"e.g. fork" = "例如：fork";
+"Edit hooks directly in SKILL.md" = "如需修改 hooks，请直接编辑 SKILL.md";
 
 /* Import */
 "Import Skill…" = "导入技能…";

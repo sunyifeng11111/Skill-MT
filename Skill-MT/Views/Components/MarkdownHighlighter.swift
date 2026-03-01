@@ -31,19 +31,32 @@ struct MarkdownTheme {
         h3    = .systemFont(ofSize: bodySize + 2, weight: .semibold)
         hN    = .systemFont(ofSize: bodySize + 1, weight: .medium)
 
-        textColor       = .labelColor
-        headerColor     = NSColor(name: nil) { _ in .controlAccentColor }
-        codeColor       = .secondaryLabelColor
+        // GitHub Primer-like markdown palette (light/dark adaptive).
+        textColor       = NSColor(name: nil) { app in
+            app.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                ? NSColor(srgbRed: 0.90, green: 0.93, blue: 0.95, alpha: 1.0)   // #e6edf3
+                : NSColor(srgbRed: 0.14, green: 0.16, blue: 0.18, alpha: 1.0)   // #24292f
+        }
+        headerColor     = NSColor(name: nil) { app in
+            app.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                ? NSColor(srgbRed: 0.18, green: 0.51, blue: 0.97, alpha: 1.0)   // #2f81f7
+                : NSColor(srgbRed: 0.04, green: 0.41, blue: 0.85, alpha: 1.0)   // #0969da
+        }
+        codeColor       = textColor
         codeBg          = NSColor(name: nil) { app in
             app.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-                ? NSColor.white.withAlphaComponent(0.07)
-                : NSColor.black.withAlphaComponent(0.06)
+                ? NSColor(srgbRed: 0.09, green: 0.11, blue: 0.13, alpha: 1.0)   // #161b22
+                : NSColor(srgbRed: 0.96, green: 0.97, blue: 0.98, alpha: 1.0)   // #f6f8fa
         }
-        linkColor       = .linkColor
-        quoteColor      = .secondaryLabelColor
-        punctColor      = .tertiaryLabelColor
-        boldColor       = .labelColor
-        listMarkerColor = .controlAccentColor
+        linkColor       = headerColor
+        quoteColor      = NSColor(name: nil) { app in
+            app.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                ? NSColor(srgbRed: 0.54, green: 0.58, blue: 0.62, alpha: 1.0)   // #8b949e
+                : NSColor(srgbRed: 0.34, green: 0.38, blue: 0.42, alpha: 1.0)   // #57606a
+        }
+        punctColor      = quoteColor
+        boldColor       = textColor
+        listMarkerColor = headerColor
     }
 }
 

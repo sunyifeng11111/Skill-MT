@@ -56,7 +56,7 @@ final class SkillCRUDService {
     ) throws -> URL {
         try validateName(name)
 
-        let targetDir = location.basePath.appendingPathComponent(name)
+        let targetDir = basePath(for: location).appendingPathComponent(name)
 
         guard !fileManager.fileExists(atPath: targetDir.path) else {
             throw SkillCRUDError.directoryAlreadyExists(path: targetDir.path)
@@ -145,7 +145,7 @@ final class SkillCRUDService {
         }
 
         let sourceDir = skill.directoryURL
-        let targetBasePath = location.basePath
+        let targetBasePath = basePath(for: location)
         let targetDir = targetBasePath.appendingPathComponent(skill.name)
 
         try assertSafePath(sourceDir, skill: skill)
@@ -174,6 +174,17 @@ final class SkillCRUDService {
         let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
         guard name.unicodeScalars.allSatisfy({ allowed.contains($0) }) else {
             throw SkillCRUDError.invalidName(reason: "Only letters, numbers, hyphens, and underscores are allowed")
+        }
+    }
+
+    private func basePath(for location: SkillLocation) -> URL {
+        switch location {
+        case .personal:
+            return FileSystemPaths.personalSkillsURL(settings: settings)
+        case .codexPersonal:
+            return FileSystemPaths.codexSkillsURL(settings: settings)
+        default:
+            return location.basePath
         }
     }
 

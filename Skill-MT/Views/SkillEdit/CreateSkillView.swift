@@ -8,8 +8,13 @@ struct CreateSkillView: View {
 
     @State private var rawName: String = ""
     @State private var descriptionText: String = ""
+    @State private var argumentHint: String = ""
     @State private var userInvocable: Bool = true
     @State private var disableModelInvocation: Bool = false
+    @State private var allowedTools: String = ""
+    @State private var model: String = ""
+    @State private var context: String = ""
+    @State private var agent: String = ""
     @State private var markdownContent: String = ""
     @State private var selectedLocation: SkillLocation = .personal
     @State private var isCreating: Bool = false
@@ -37,7 +42,7 @@ struct CreateSkillView: View {
     }
 
     private var previewPath: String {
-        let leaf = sanitizedName.isEmpty ? "<name>" : sanitizedName
+        let leaf = sanitizedName.isEmpty ? "<\(localization.string("name"))>" : sanitizedName
         return selectedLocation.basePath.appendingPathComponent(leaf).path
     }
 
@@ -51,16 +56,37 @@ struct CreateSkillView: View {
 
             Divider()
 
-            Form {
-                identitySection
-                settingsSection
-                if availableLocations.count > 1 {
-                    locationSection
+            HSplitView {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        identitySection
+                        SkillEditorFieldsView(
+                            hooksRaw: nil,
+                            description: $descriptionText,
+                            argumentHint: $argumentHint,
+                            userInvocable: $userInvocable,
+                            disableModelInvocation: $disableModelInvocation,
+                            allowedTools: $allowedTools,
+                            model: $model,
+                            context: $context,
+                            agent: $agent
+                        )
+                    }
+                    .padding(.vertical, 8)
                 }
-                contentSection
-                pathPreviewSection
+                .frame(minWidth: 380)
+                .layoutPriority(1)
+
+                SkillEditorContentView(markdownContent: $markdownContent)
+                    .padding(.vertical, 8)
+                    .frame(minWidth: 520, maxWidth: .infinity, minHeight: 520, alignment: .topLeading)
+                    .layoutPriority(2)
             }
-            .formStyle(.grouped)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .clipped()
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+            .padding(.bottom, 8)
 
             if let err = createError {
                 errorBanner(err)
@@ -70,7 +96,7 @@ struct CreateSkillView: View {
 
             sheetFooter
         }
-        .frame(minWidth: 480, idealWidth: 520, minHeight: 440)
+        .frame(minWidth: 900, idealWidth: 1040, minHeight: 620)
         .onAppear {
             syncSelectedLocation(forcePreferred: true)
             didInitializeLocation = true
@@ -93,10 +119,10 @@ struct CreateSkillView: View {
     private var sheetHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("New Skill")
+                Text(localization.string("New Skill"))
                     .font(.title3)
                     .fontWeight(.semibold)
-                Text("Create a local skill")
+                Text(localization.string("Create a local skill"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -108,7 +134,7 @@ struct CreateSkillView: View {
 
     private var sheetFooter: some View {
         HStack {
-            Button("Cancel") { dismiss() }
+            Button(localization.string("Cancel")) { dismiss() }
                 .keyboardShortcut(.escape)
             Spacer()
             Button {
@@ -117,7 +143,7 @@ struct CreateSkillView: View {
                 if isCreating {
                     ProgressView().controlSize(.small)
                 } else {
-                    Text("Create")
+                    Text(localization.string("Create"))
                 }
             }
             .keyboardShortcut(.return, modifiers: .command)
@@ -128,62 +154,84 @@ struct CreateSkillView: View {
         .padding(.vertical, 16)
     }
 
-    // MARK: - Form Sections
+    // MARK: - Sections
 
     private var identitySection: some View {
-        Section("Identity") {
-            TextField("Skill name", text: $rawName, prompt: Text("e.g. code-reviewer"))
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader(localization.string("Identity"))
 
-            if !rawName.isEmpty && sanitizedName != rawName {
-                Label("Will be saved as: \(sanitizedName)", systemImage: "info.circle")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(localization.string("name"))
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                    TextField(localization.string("e.g. code-reviewer"), text: $rawName)
+                        .font(.body)
+                }
 
-            TextField("Description", text: $descriptionText, prompt: Text("One-line description (optional)"))
-        }
-    }
+                if !rawName.isEmpty && sanitizedName != rawName {
+                    Label(
+                        String(format: localization.string("Will be saved as: %@"), sanitizedName),
+                        systemImage: "info.circle"
+                    )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
-    private var settingsSection: some View {
-        Section("Settings") {
-            Toggle("User-invocable", isOn: $userInvocable)
-            Toggle("Disable model invocation", isOn: $disableModelInvocation)
-        }
-    }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(localization.string("location"))
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                    Picker(localization.string("Save to"), selection: $selectedLocation) {
+                        ForEach(availableLocations, id: \.self) { loc in
+                            Text(locationLabel(loc)).tag(loc)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                }
 
-    private var locationSection: some View {
-        Section("Location") {
-            Picker("Save to", selection: $selectedLocation) {
-                ForEach(availableLocations, id: \.self) { loc in
-                    Text(locationLabel(loc)).tag(loc)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(localization.string("Output path"))
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                    HStack(spacing: 6) {
+                        Image(systemName: "folder")
+                            .foregroundStyle(.secondary)
+                            .font(.caption)
+                        Text(previewPath)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                            .lineLimit(2)
+                            .truncationMode(.middle)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8))
                 }
             }
+            .padding(16)
         }
+        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(Color.primary.opacity(0.07), lineWidth: 0.5)
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
     }
 
-    private var contentSection: some View {
-        Section("Initial Content") {
-            HighlightedTextView(text: $markdownContent)
-                .frame(minHeight: 80)
-        }
-    }
-
-    private var pathPreviewSection: some View {
-        Section {
-            HStack(spacing: 6) {
-                Image(systemName: "folder")
-                    .foregroundStyle(.secondary)
-                    .font(.caption)
-                Text(previewPath)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
-                    .lineLimit(2)
-                    .truncationMode(.middle)
-            }
-        } header: {
-            Text("Output path")
-        }
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.caption)
+            .fontWeight(.semibold)
+            .foregroundStyle(.secondary)
+            .textCase(.uppercase)
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+            .padding(.bottom, 6)
     }
 
     // MARK: - Error Banner
@@ -213,13 +261,19 @@ struct CreateSkillView: View {
         case .codexSystem:
             return localization.string("System Skills")
         case .project(let path):
-            return "Project: \(URL(fileURLWithPath: path).lastPathComponent)"
+            return String(
+                format: localization.string("Project: %@"),
+                URL(fileURLWithPath: path).lastPathComponent
+            )
         case .codexProject(let path):
-            return "Project: \(URL(fileURLWithPath: path).lastPathComponent)"
+            return String(
+                format: localization.string("Project: %@"),
+                URL(fileURLWithPath: path).lastPathComponent
+            )
         case .legacyCommand:
             return localization.string("Legacy Commands")
         case .plugin:
-            return "Plugin"
+            return localization.string("Plugin")
         }
     }
 
@@ -239,8 +293,18 @@ struct CreateSkillView: View {
         let frontmatter = SkillFrontmatter(
             name: name,
             description: normalizedDescription.isEmpty ? nil : normalizedDescription,
+            argumentHint: argumentHint.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? nil : argumentHint.trimmingCharacters(in: .whitespacesAndNewlines),
             disableModelInvocation: disableModelInvocation,
-            userInvocable: userInvocable
+            userInvocable: userInvocable,
+            allowedTools: allowedTools.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? nil : allowedTools.trimmingCharacters(in: .whitespacesAndNewlines),
+            model: model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? nil : model.trimmingCharacters(in: .whitespacesAndNewlines),
+            context: context.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? nil : context.trimmingCharacters(in: .whitespacesAndNewlines),
+            agent: agent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? nil : agent.trimmingCharacters(in: .whitespacesAndNewlines)
         )
 
         do {
