@@ -5,6 +5,7 @@ import Foundation
 enum SkillCRUDError: LocalizedError {
     case invalidName(reason: String)
     case directoryAlreadyExists(path: String)
+    case unsupportedMove
     case writeFailed(path: String, underlying: Error)
     case deleteFailed(path: String, underlying: Error)
     case unsafeDeletePath(path: String)
@@ -14,7 +15,12 @@ enum SkillCRUDError: LocalizedError {
         case .invalidName(let reason):
             return "Invalid skill name: \(reason)"
         case .directoryAlreadyExists(let path):
-            return "A skill already exists at: \(URL(fileURLWithPath: path).lastPathComponent)"
+            return String(
+                format: String(localized: "A skill named \"%@\" already exists in target location."),
+                URL(fileURLWithPath: path).lastPathComponent
+            )
+        case .unsupportedMove:
+            return "This skill cannot be moved to the selected location."
         case .writeFailed(let path, let error):
             return "Failed to write \(URL(fileURLWithPath: path).lastPathComponent): \(error.localizedDescription)"
         case .deleteFailed(let path, let error):
@@ -125,6 +131,40 @@ final class SkillCRUDService {
         }
     }
 
+    // MARK: - Move
+
+    /// Move a skill directory to another writable location.
+    /// - Returns: URL of the moved directory in the target location.
+    @discardableResult
+    func moveSkill(_ skill: Skill, to location: SkillLocation) throws -> URL {
+        guard !skill.isLegacyCommand, !skill.location.isReadOnly, !location.isReadOnly else {
+            throw SkillCRUDError.unsupportedMove
+        }
+        guard isSupportedMove(from: skill.location, to: location) else {
+            throw SkillCRUDError.unsupportedMove
+        }
+
+        let sourceDir = skill.directoryURL
+        let targetBasePath = location.basePath
+        let targetDir = targetBasePath.appendingPathComponent(skill.name)
+
+        try assertSafePath(sourceDir, skill: skill)
+        try assertTargetPathIsSafe(targetDir, for: location)
+
+        guard !fileManager.fileExists(atPath: targetDir.path) else {
+            throw SkillCRUDError.directoryAlreadyExists(path: targetDir.path)
+        }
+
+        do {
+            try fileManager.createDirectory(at: targetBasePath, withIntermediateDirectories: true)
+            try fileManager.moveItem(at: sourceDir, to: targetDir)
+        } catch {
+            throw SkillCRUDError.writeFailed(path: targetDir.path, underlying: error)
+        }
+
+        return targetDir
+    }
+
     // MARK: - Validation
 
     private func validateName(_ name: String) throws {
@@ -134,6 +174,29 @@ final class SkillCRUDService {
         let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-_"))
         guard name.unicodeScalars.allSatisfy({ allowed.contains($0) }) else {
             throw SkillCRUDError.invalidName(reason: "Only letters, numbers, hyphens, and underscores are allowed")
+        }
+    }
+
+    private func isSupportedMove(from: SkillLocation, to: SkillLocation) -> Bool {
+        switch (from, to) {
+        case (.personal, .personal), (.project, .project):
+            return true
+        case (.personal, .project), (.project, .personal):
+            return true
+        case (.codexPersonal, .codexPersonal), (.codexProject, .codexProject):
+            return true
+        case (.codexPersonal, .codexProject), (.codexProject, .codexPersonal):
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func assertTargetPathIsSafe(_ targetURL: URL, for location: SkillLocation) throws {
+        let path = targetURL.standardizedFileURL.path
+        let base = location.basePath.standardizedFileURL.path + "/"
+        guard path.hasPrefix(base) else {
+            throw SkillCRUDError.unsafeDeletePath(path: path)
         }
     }
 

@@ -13,7 +13,6 @@ struct ContentView: View {
         } detail: {
             if let skill = appState.selectedSkill {
                 SkillDetailView(skill: skill, appState: appState)
-                    .id(skill.id)
             } else {
                 EmptyStateView(
                     icon: "bookmark.square",

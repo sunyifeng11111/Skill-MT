@@ -390,6 +390,23 @@ struct SkillListView: View {
             Label("Export…", systemImage: "square.and.arrow.up")
         }
         .disabled(skill.isLegacyCommand || skill.location.isPlugin)
+        Menu {
+            let targets = state.availableMoveTargets(for: skill)
+            if targets.isEmpty {
+                Text(localization.string("No available move target"))
+            } else {
+                ForEach(targets, id: \.self) { target in
+                    Button {
+                        Task { try? await state.moveSkill(skill, to: target) }
+                    } label: {
+                        Text(moveTargetLabel(target))
+                    }
+                }
+            }
+        } label: {
+            Label(localization.string("Move To"), systemImage: "arrow.left.arrow.right.circle")
+        }
+        .disabled(skill.location.isReadOnly || state.availableMoveTargets(for: skill).isEmpty)
         Divider()
         Button(role: .destructive) {
             state.skillToDelete = skill
@@ -444,6 +461,20 @@ struct SkillListView: View {
             return id.components(separatedBy: "@").first ?? id
         case .codexSystem:
             return localization.string("System Skills")
+        }
+    }
+
+    private func moveTargetLabel(_ location: SkillLocation) -> String {
+        switch location {
+        case .personal, .codexPersonal:
+            return localization.string("Move to Global Skills")
+        case .project(let path), .codexProject(let path):
+            return String(
+                format: localization.string("Move to Project: %@"),
+                URL(fileURLWithPath: path).lastPathComponent
+            )
+        default:
+            return location.displayName
         }
     }
 }

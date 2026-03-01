@@ -58,6 +58,11 @@
 "Show in Finder" = "Show in Finder";
 "Copy Path" = "Copy Path";
 "Export…" = "Export…";
+"Move To" = "Move To";
+"Move to Global Skills" = "Move to Global Skills";
+"Move to Project: %@" = "Move to Project: %@";
+"No available move target" = "No available move target";
+"A skill named \"%@\" already exists in target location." = "A skill named \"%@\" already exists in target location.";
 "Delete…" = "Delete…";
 "Disable" = "Disable";
 "Enable" = "Enable";
@@ -79,6 +84,9 @@
 "Fork to Personal" = "Fork to Global";
 "System skill — read only" = "System skill — read only";
 "Built-in Codex skills cannot be edited or deleted." = "Built-in Codex skills cannot be edited or deleted.";
+"Open file?" = "Open file?";
+"Do you want to open \"%@\"?" = "Do you want to open \"%@\"?";
+"Open" = "Open";
 
 /* Create Skill */
 "New Skill" = "New Skill";

@@ -60,6 +60,11 @@
 "Show in Finder" = "在 Finder 中显示";
 "Copy Path" = "复制路径";
 "Export…" = "导出…";
+"Move To" = "移动到";
+"Move to Global Skills" = "移动到全局技能";
+"Move to Project: %@" = "移动到项目：%@";
+"No available move target" = "无可用迁移目标";
+"A skill named \"%@\" already exists in target location." = "目标位置已存在同名技能“%@”。";
 "Delete…" = "删除…";
 "Disable" = "禁用";
 "Enable" = "启用";
@@ -79,6 +84,9 @@
 "Fork to Personal" = "Fork 到全局技能";
 "System skill — read only" = "系统技能 — 只读";
 "Built-in Codex skills cannot be edited or deleted." = "Codex 内置系统技能不可编辑或删除。";
+"Open file?" = "打开文件？";
+"Do you want to open \"%@\"?" = "要打开“%@”吗？";
+"Open" = "打开";
 
 /* Disable confirmation */
 "Claude Code will no longer be able to find this skill. You can re-enable it at any time." = "Claude Code 将无法找到此技能。你可以随时重新启用它。";

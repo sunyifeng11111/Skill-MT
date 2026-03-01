@@ -3,6 +3,11 @@ import SwiftUI
 struct SkillDetailView: View {
     let skill: Skill
     @Bindable var appState: AppState
+    @Environment(\.localization) private var localization
+    @State private var showOpenSupportingFileAlert: Bool = false
+    @State private var pendingSupportingFileURL: URL?
+    @State private var pendingSupportingFileRelativePath: String = ""
+    @State private var expandedSupportingDirectories: Set<String> = []
 
     var body: some View {
         ScrollView {
@@ -41,6 +46,30 @@ struct SkillDetailView: View {
         }
         .sheet(item: $appState.skillToEdit) { skillToEdit in
             EditSkillView(skill: skillToEdit, appState: appState)
+        }
+        .alert("Open file?", isPresented: $showOpenSupportingFileAlert) {
+            Button("Open") {
+                if let url = pendingSupportingFileURL {
+                    NSWorkspace.shared.open(url)
+                }
+                clearPendingSupportingFile()
+            }
+            Button("Reveal in Finder") {
+                if let url = pendingSupportingFileURL {
+                    NSWorkspace.shared.activateFileViewerSelecting([url])
+                }
+                clearPendingSupportingFile()
+            }
+            Button("Cancel", role: .cancel) {
+                clearPendingSupportingFile()
+            }
+        } message: {
+            Text(
+                String(
+                    format: localization.string("Do you want to open \"%@\"?"),
+                    pendingSupportingFileRelativePath
+                )
+            )
         }
     }
 
@@ -180,31 +209,178 @@ struct SkillDetailView: View {
                 .padding(.top, 14)
                 .padding(.bottom, 8)
 
-            ForEach(skill.supportingFiles) { file in
-                HStack(spacing: 10) {
-                    Image(systemName: file.isDirectory ? "folder" : "doc.text")
-                        .foregroundStyle(.secondary)
-                        .frame(width: 16)
-                    Text(file.relativePath)
-                        .font(.system(.caption, design: .monospaced))
-                    Spacer()
-                    if !file.isDirectory {
-                        Text(ByteCountFormatter.string(fromByteCount: file.fileSize, countStyle: .file))
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 6)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    NSWorkspace.shared.open(file.fileURL)
-                }
+            ForEach(supportingFileTree) { node in
+                supportingFileBranch(node, level: 0)
             }
+            .padding(.horizontal, 16)
             .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardPanel()
+    }
+
+    private func supportingFileBranch(_ node: SupportingFileTreeNode, level: Int) -> AnyView {
+        AnyView(
+            VStack(alignment: .leading, spacing: 0) {
+                supportingFileNodeRow(node, level: level)
+                if node.isDirectory,
+                   expandedSupportingDirectories.contains(node.id),
+                   let children = node.children {
+                    ForEach(children) { child in
+                        supportingFileBranch(child, level: level + 1)
+                    }
+                }
+            }
+        )
+    }
+
+    private func supportingFileNodeRow(_ node: SupportingFileTreeNode, level: Int) -> some View {
+        HStack(spacing: 10) {
+            if node.isDirectory {
+                Image(systemName: expandedSupportingDirectories.contains(node.id) ? "chevron.down" : "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 10)
+            } else {
+                Color.clear.frame(width: 10, height: 1)
+            }
+            Image(systemName: node.isDirectory ? "folder" : "doc.text")
+                .foregroundStyle(.secondary)
+                .frame(width: 16)
+            Text(node.name)
+                .font(.system(.caption, design: .monospaced))
+            Spacer()
+            if !node.isDirectory {
+                Text(ByteCountFormatter.string(fromByteCount: node.fileSize, countStyle: .file))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.vertical, 6)
+        .padding(.leading, CGFloat(level) * 22)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if node.isDirectory {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    if expandedSupportingDirectories.contains(node.id) {
+                        expandedSupportingDirectories.remove(node.id)
+                    } else {
+                        expandedSupportingDirectories.insert(node.id)
+                    }
+                }
+            } else {
+                pendingSupportingFileURL = node.fileURL
+                pendingSupportingFileRelativePath = node.relativePath
+                showOpenSupportingFileAlert = true
+            }
+        }
+    }
+
+    private var supportingFileTree: [SupportingFileTreeNode] {
+        buildSupportingFileTree(from: skill.supportingFiles)
+    }
+
+    private func buildSupportingFileTree(from files: [SkillFile]) -> [SupportingFileTreeNode] {
+        final class MutableNode {
+            let name: String
+            var relativePath: String
+            var fileURL: URL
+            var isDirectory: Bool
+            var fileSize: Int64
+            var children: [String: MutableNode]
+
+            init(
+                name: String,
+                relativePath: String,
+                fileURL: URL,
+                isDirectory: Bool,
+                fileSize: Int64 = 0
+            ) {
+                self.name = name
+                self.relativePath = relativePath
+                self.fileURL = fileURL
+                self.isDirectory = isDirectory
+                self.fileSize = fileSize
+                self.children = [:]
+            }
+        }
+
+        let root = MutableNode(
+            name: "",
+            relativePath: "",
+            fileURL: skill.directoryURL,
+            isDirectory: true
+        )
+
+        for file in files {
+            let components = file.relativePath.split(separator: "/").map(String.init)
+            guard !components.isEmpty else { continue }
+
+            var current = root
+            var pathParts: [String] = []
+
+            for (index, component) in components.enumerated() {
+                pathParts.append(component)
+                let fullPath = pathParts.joined(separator: "/")
+                let isLeaf = index == components.count - 1
+                let leafIsDirectory = isLeaf ? file.isDirectory : true
+                let nodeURL = skill.directoryURL.appendingPathComponent(fullPath)
+
+                let node: MutableNode
+                if let existing = current.children[component] {
+                    node = existing
+                } else {
+                    let created = MutableNode(
+                        name: component,
+                        relativePath: fullPath,
+                        fileURL: nodeURL,
+                        isDirectory: leafIsDirectory,
+                        fileSize: isLeaf ? file.fileSize : 0
+                    )
+                    current.children[component] = created
+                    node = created
+                }
+
+                if isLeaf {
+                    node.relativePath = file.relativePath
+                    node.fileURL = file.fileURL
+                    node.isDirectory = file.isDirectory
+                    node.fileSize = file.fileSize
+                }
+
+                current = node
+            }
+        }
+
+        func sortNodes(_ lhs: MutableNode, _ rhs: MutableNode) -> Bool {
+            if lhs.isDirectory != rhs.isDirectory {
+                return lhs.isDirectory && !rhs.isDirectory
+            }
+            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+        }
+
+        func toTreeNode(_ node: MutableNode) -> SupportingFileTreeNode {
+            let sortedChildren = node.children.values.sorted(by: sortNodes)
+            let childNodes = sortedChildren.map(toTreeNode)
+            return SupportingFileTreeNode(
+                name: node.name,
+                relativePath: node.relativePath,
+                fileURL: node.fileURL,
+                isDirectory: node.isDirectory,
+                fileSize: node.fileSize,
+                children: childNodes.isEmpty ? nil : childNodes
+            )
+        }
+
+        return root.children.values
+            .sorted(by: sortNodes)
+            .map(toTreeNode)
+    }
+
+    private func clearPendingSupportingFile() {
+        showOpenSupportingFileAlert = false
+        pendingSupportingFileURL = nil
+        pendingSupportingFileRelativePath = ""
     }
 
     // MARK: - Badges
@@ -247,6 +423,10 @@ struct SkillDetailView: View {
         return false
     }
 
+    private var moveTargets: [SkillLocation] {
+        appState.availableMoveTargets(for: skill)
+    }
+
     // MARK: - Toolbar
 
     private var detailToolbar: some ToolbarContent {
@@ -254,11 +434,29 @@ struct SkillDetailView: View {
             Button {
                 Task { try? await appState.toggleSkillEnabled(skill) }
             } label: {
-                Label(skill.isEnabled ? "Disable" : "Enable",
-                      systemImage: skill.isEnabled ? "pause.circle" : "play.circle")
+                Image(systemName: skill.isEnabled ? "pause.circle" : "play.circle")
             }
+            .accessibilityLabel(skill.isEnabled ? "Disable" : "Enable")
             .help(skill.isEnabled ? "Disable this skill" : "Enable this skill")
             .disabled(skill.location.isReadOnly)
+
+            Menu {
+                if moveTargets.isEmpty {
+                    Text("No available move target")
+                } else {
+                    ForEach(moveTargets, id: \.self) { target in
+                        Button {
+                            Task { try? await appState.moveSkill(skill, to: target) }
+                        } label: {
+                            Text(moveTargetLabel(target))
+                        }
+                    }
+                }
+            } label: {
+                Label("Move To", systemImage: "arrow.left.arrow.right.circle")
+            }
+            .disabled(skill.location.isReadOnly || moveTargets.isEmpty)
+            .help("Move this skill to another location")
 
             Button {
                 NSWorkspace.shared.activateFileViewerSelecting([skill.directoryURL])
@@ -289,6 +487,30 @@ struct SkillDetailView: View {
             )
         }
     }
+
+    private func moveTargetLabel(_ location: SkillLocation) -> String {
+        switch location {
+        case .personal, .codexPersonal:
+            return localization.string("Move to Global Skills")
+        case .project(let path), .codexProject(let path):
+            return String(
+                format: localization.string("Move to Project: %@"),
+                URL(fileURLWithPath: path).lastPathComponent
+            )
+        default:
+            return location.displayName
+        }
+    }
+}
+
+private struct SupportingFileTreeNode: Identifiable, Hashable {
+    var id: String { relativePath }
+    let name: String
+    let relativePath: String
+    let fileURL: URL
+    let isDirectory: Bool
+    let fileSize: Int64
+    let children: [SupportingFileTreeNode]?
 }
 
 // MARK: - Card Panel Modifier

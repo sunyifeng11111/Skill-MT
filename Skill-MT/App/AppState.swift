@@ -4,11 +4,14 @@ import UniformTypeIdentifiers
 
 enum AppStateError: LocalizedError {
     case readOnlySkill
+    case invalidMoveTarget
 
     var errorDescription: String? {
         switch self {
         case .readOnlySkill:
             return "This skill is read-only and cannot be modified."
+        case .invalidMoveTarget:
+            return "This skill cannot be moved to the selected location."
         }
     }
 }
@@ -234,6 +237,55 @@ final class AppState {
             try SkillCRUDService().deleteSkill(skill)
         }.value
         await loadAllSkills()
+    }
+
+    @MainActor
+    func availableMoveTargets(for skill: Skill) -> [SkillLocation] {
+        guard !skill.location.isReadOnly, !skill.isLegacyCommand else { return [] }
+
+        switch skill.location {
+        case .personal:
+            return monitoredProjectURLs.map { .project(path: $0.path) }
+        case .project(let sourcePath):
+            var targets: [SkillLocation] = [.personal]
+            targets += monitoredProjectURLs
+                .map(\.path)
+                .filter { $0 != sourcePath }
+                .map { .project(path: $0) }
+            return targets
+        case .codexPersonal:
+            return monitoredProjectURLs.map { .codexProject(path: $0.path) }
+        case .codexProject(let sourcePath):
+            var targets: [SkillLocation] = [.codexPersonal]
+            targets += monitoredProjectURLs
+                .map(\.path)
+                .filter { $0 != sourcePath }
+                .map { .codexProject(path: $0) }
+            return targets
+        default:
+            return []
+        }
+    }
+
+    @MainActor
+    func moveSkill(_ skill: Skill, to location: SkillLocation) async throws {
+        let targets = availableMoveTargets(for: skill)
+        guard targets.contains(location) else {
+            let error = AppStateError.invalidMoveTarget
+            lastError = error.localizedDescription
+            throw error
+        }
+
+        do {
+            let targetDir = try await Task.detached(priority: .userInitiated) {
+                try SkillCRUDService().moveSkill(skill, to: location)
+            }.value
+            await loadAllSkills()
+            selectedSkill = allSkills.first { $0.directoryURL.path == targetDir.path }
+        } catch {
+            lastError = error.localizedDescription
+            throw error
+        }
     }
 
     // MARK: - Export
